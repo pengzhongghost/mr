@@ -2,6 +2,7 @@ package com.atguigu.mapreduce.test;
 
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
@@ -12,12 +13,12 @@ import java.math.BigDecimal;
  * @since 2023/8/2
  */
 @Slf4j
-public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, DimensionVO, EmployeePerformanceVO> {
+public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, EmployeePerformanceVO> {
 
     private final EmployeePerformanceVO employeePerformance = new EmployeePerformanceVO();
 
     @Override
-    protected void reduce(DimensionVO key, Iterable<EmployeePerformanceVO> values, Reducer<DimensionVO, EmployeePerformanceVO, DimensionVO, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
+    protected void reduce(DimensionVO key, Iterable<EmployeePerformanceVO> values, Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
         if (0 == key.getUserId()) {
             return;
         }
@@ -51,7 +52,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 log.error("PerformanceReducer reduce employeePerformance:{}", JSONUtil.toJsonStr(employeePerformance));
             }
         }
-        context.write(key, employeePerformance);
+        context.write(NullWritable.get(), employeePerformance);
     }
 
 }

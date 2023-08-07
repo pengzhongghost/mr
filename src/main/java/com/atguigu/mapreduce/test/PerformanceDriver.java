@@ -19,9 +19,12 @@ public class PerformanceDriver {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException, URISyntaxException {
         //hadoop jar wc.jar redu.mr.wordcount.WordcountDriver /user/joe/wordcount/input /user/joe/wordcount/output
 
+        String paidMonth = args[0];
+        String ds = args[1];
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
+        configuration.set("paid_month", paidMonth);
         Job job = Job.getInstance(configuration);
         //job.setInputFormatClass(OrcInputFormat.class);
 
@@ -39,6 +42,8 @@ public class PerformanceDriver {
         job.setMapOutputValueClass(EmployeePerformanceVO.class);
 
         // 5 设置最终输出kv类型
+        //FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+        //job.setOutputFormatClass(OrcOutputFormat.class);
         job.setOutputKeyClass(DimensionVO.class);
         job.setOutputValueClass(EmployeePerformanceVO.class);
 
@@ -46,8 +51,8 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("/Users/pengzhong/Downloads/redu_user"));
 
         // 6 设置输入和输出路径
-        FileInputFormat.setInputPaths(job, new Path("/Users/pengzhong/Downloads/redu_order_tmp__003e38a0_fe7f_4b85_b4b5_661715539fd2"));
-        FileOutputFormat.setOutputPath(job, new Path("/Users/pengzhong/Downloads/test" + System.currentTimeMillis()));
+        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_temp"));
+        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp"));
 //        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230804/*"));
 //        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/"+System.currentTimeMillis()));
 

@@ -4,7 +4,6 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -34,6 +33,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
      */
     private final Map<String, EmployeeVO> userMap = new HashMap<>();
 
+    private String paidMonth;
+
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         //1.获取redu_user表中的相关信息
@@ -60,9 +61,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         rows.close();
         // 关流
         IOUtils.closeStream(in);
-
-
-
+        //2.付款时间
+        paidMonth = context.getConfiguration().get("paid_month");
     }
 
 
@@ -89,6 +89,10 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             String partnerDeptNamePath = split[49];
             String paidTime = split[5];
             if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
+                return;
+            }
+            String statisticsTime = DateUtil.format(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT), DatePattern.NORM_MONTH_FORMATTER);
+            if (!paidMonth.equals(statisticsTime)) {
                 return;
             }
             //1.平台
@@ -153,7 +157,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 outV.setGroupName(partnerNames[4]);
             }
             //5.统计时间
-            String statisticsTime = DateUtil.format(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT), DatePattern.NORM_MONTH_FORMATTER);
             outV.setStatisticsTime(statisticsTime);
             outK.setPlatform(platformCode);
             outK.setRoleType(1);

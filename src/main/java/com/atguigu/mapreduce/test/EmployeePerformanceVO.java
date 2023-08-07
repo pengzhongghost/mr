@@ -119,28 +119,28 @@ public class EmployeePerformanceVO implements Writable {
     @Override
     public String toString() {
         return
-                "teamName='" + teamName + '\'' +
-                        ", teamId=" + teamId +
-                        ", branchName='" + branchName + '\'' +
-                        ", branchId=" + branchId +
-                        ", groupName='" + groupName + '\'' +
-                        ", groupId=" + groupId +
-                        ", deptIdPath='" + deptIdPath + '\'' +
-                        ", deptNamePath='" + deptNamePath + '\'' +
-                        ", employeeName='" + employeeName + '\'' +
-                        ", statisticsTime='" + statisticsTime + '\'' +
-                        ", platform='" + platform + '\'' +
-                        ", orderCount=" + orderCount +
-                        ", fundOrderCount=" + fundOrderCount +
-                        ", validOrderNum=" + validOrderNum +
-                        ", gmv='" + gmv + '\'' +
-                        ", fundOrderGmv='" + fundOrderGmv + '\'' +
-                        ", validServiceIncome='" + validServiceIncome + '\'' +
-                        ", roleType=" + roleType +
-                        ", employeeNo='" + employeeNo + '\'' +
-                        ", orderAchievementSum='" + orderAchievementSum + '\'' +
-                        ", estimateServiceIncome='" + estimateServiceIncome + '\'' +
-                        ", userId=" + userId;
+                teamName + "," +
+                        teamId +
+                        branchName + "," +
+                        branchId +
+                        groupName + "," +
+                        groupId +
+                        deptIdPath + "," +
+                        deptNamePath + "," +
+                        employeeName + "," +
+                        statisticsTime + "," +
+                        platform + "," +
+                        orderCount +
+                        fundOrderCount +
+                        validOrderNum +
+                        gmv + "," +
+                        fundOrderGmv + "," +
+                        validServiceIncome + "," +
+                        roleType +
+                        employeeNo + "," +
+                        orderAchievementSum + "," +
+                        estimateServiceIncome + "," +
+                        userId;
     }
 
     public static void main(String[] args) {
