@@ -4,23 +4,18 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.orc.OrcFile;
-import org.apache.orc.OrcUtils;
 import org.apache.orc.Reader;
 import org.apache.orc.RecordReader;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 
@@ -34,33 +29,41 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
 
     private EmployeePerformanceVO outV = new EmployeePerformanceVO();
 
-    private final Map<String, String> userMap = new HashMap<>();
+    /**
+     * <用户id,用户信息>
+     */
+    private final Map<String, EmployeeVO> userMap = new HashMap<>();
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
+        //1.获取redu_user表中的相关信息
         // 获取缓存的文件，并把文件内容封装到集合
         URI[] cacheFiles = context.getCacheFiles();
-        FileSystem fs = FileSystem.get(context.getConfiguration());
-        Reader reader = OrcFile.createReader(new Path(cacheFiles[0]), new OrcFile.ReaderOptions(new Configuration()).filesystem(fs));
-        RecordReader rows = reader.rows();
-        VectorizedRowBatch batch = reader.getSchema().createRowBatch();
-        while (null != batch) {
-
+        Reader in = OrcFile.createReader(new Path(cacheFiles[0]), OrcFile.readerOptions(context.getConfiguration()));
+        // 解析schema
+        VectorizedRowBatch inBatch = in.getSchema().createRowBatch();
+        // 流解析文件
+        RecordReader rows = in.rows();
+        while (rows.nextBatch(inBatch)) {   // 读1个batch
+            // 列式读取
+            LongColumnVector userId = (LongColumnVector) inBatch.cols[0];
+            BytesColumnVector name = (BytesColumnVector) inBatch.cols[2];
+            BytesColumnVector employeeNo = (BytesColumnVector) inBatch.cols[8];
+            for (int i = 0; i < inBatch.size; i++) {
+                // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
+                EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
+                        .employeeNo(new String(employeeNo.vector[i], employeeNo.start[i], employeeNo.length[i]))
+                        .name(new String(name.vector[i], name.start[i], name.length[i])).build();
+                userMap.put(employee.getUserId(), employee);
+            }
         }
-        // 从流中读取数据
-        //BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
-//        while (StringUtils.isNotEmpty(line = reader.readLine())) {
-//            // 切割
-//            String[] fields = line.split("\t");
-//
-//            // 赋值
-//            userMap.put(fields[0], fields[1]);
-//        }
-
+        rows.close();
         // 关流
-        IOUtils.closeStream(reader);
-    }
+        IOUtils.closeStream(in);
 
+
+
+    }
 
 
     @Override
@@ -85,6 +88,9 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             String partnerDeptIdPath = split[48];
             String partnerDeptNamePath = split[49];
             String paidTime = split[5];
+            if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
+                return;
+            }
             //1.平台
             if (StrUtil.isEmpty(platformCode)) {
                 outV.setPlatform("-");
@@ -121,10 +127,16 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 outK.setUserId(0);
             }
             outV.setRoleType(1);
-            //outV.setEmployeeName(partnerName);
             outV.setOrderCount(1);
-            //FIXME 读取另外一张表
-            //outV.setEmployeeNo();
+            //工号
+            EmployeeVO employee = userMap.get(partnerId);
+            if (null != employee) {
+                outV.setEmployeeNo(employee.getEmployeeNo());
+                outV.setEmployeeName(employee.getName());
+                outK.setEmployeeNo(employee.getEmployeeNo());
+            } else {
+                outK.setEmployeeNo("0");
+            }
             //4.部门信息
             outV.setDeptIdPath(partnerDeptIdPath);
             String[] partnerIds = partnerDeptIdPath.split("/");
@@ -145,9 +157,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setStatisticsTime(statisticsTime);
             outK.setPlatform(platformCode);
             outK.setRoleType(1);
-            outK.setEmployeeNo("0");
             outK.setStatisticsTime(statisticsTime);
-            //outV.setEmployeeNo();
             context.write(outK, outV);
         }
     }

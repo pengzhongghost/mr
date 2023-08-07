@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @Slf4j
 public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, DimensionVO, EmployeePerformanceVO> {
 
-    private EmployeePerformanceVO employeePerformance = new EmployeePerformanceVO();
+    private final EmployeePerformanceVO employeePerformance = new EmployeePerformanceVO();
 
     @Override
     protected void reduce(DimensionVO key, Iterable<EmployeePerformanceVO> values, Reducer<DimensionVO, EmployeePerformanceVO, DimensionVO, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
@@ -23,9 +23,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         }
         for (EmployeePerformanceVO value : values) {
             try {
-                if (null != employeePerformance) {
-                    employeePerformance.setTeamName(value.getTeamName());
-                }
+                employeePerformance.setTeamName(value.getTeamName());
+                employeePerformance.setUserId(value.getUserId());
                 employeePerformance.setTeamId(value.getTeamId());
                 employeePerformance.setBranchName(value.getBranchName());
                 employeePerformance.setBranchId(value.getBranchId());

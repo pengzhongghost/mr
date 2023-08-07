@@ -44,8 +44,6 @@ public class PerformanceDriver {
 
         // 加载缓存数据
         job.addCacheFile(new URI("/Users/pengzhong/Downloads/redu_user"));
-        // Map端Join的逻辑不需要Reduce阶段，设置reduceTask数量为0
-        job.setNumReduceTasks(0);
 
         // 6 设置输入和输出路径
         FileInputFormat.setInputPaths(job, new Path("/Users/pengzhong/Downloads/redu_order_tmp__003e38a0_fe7f_4b85_b4b5_661715539fd2"));
