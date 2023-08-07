@@ -48,7 +48,7 @@ public class PerformanceDriver {
         job.setOutputValueClass(EmployeePerformanceVO.class);
 
         // 加载缓存数据
-        job.addCacheFile(new URI("/Users/pengzhong/Downloads/redu_user"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230806/*"));
 
         // 6 设置输入和输出路径
         //FileInputFormat.setInputPaths(job, );
