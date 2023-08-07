@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.orc.mapreduce.OrcInputFormat;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,12 +20,11 @@ public class PerformanceDriver {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException, URISyntaxException {
         //hadoop jar wc.jar redu.mr.wordcount.WordcountDriver /user/joe/wordcount/input /user/joe/wordcount/output
 
-        String paidMonth = args[0];
-        String ds = args[1];
+        //String paidMonth = args[0];
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
-        configuration.set("paid_month", paidMonth);
+        configuration.set("paid_month", "2023-06");
         Job job = Job.getInstance(configuration);
         //job.setInputFormatClass(OrcInputFormat.class);
 
@@ -51,8 +51,10 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("/Users/pengzhong/Downloads/redu_user"));
 
         // 6 设置输入和输出路径
-        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_temp"));
-        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp"));
+        //FileInputFormat.setInputPaths(job, );
+        OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_temp/*"));
+        job.setInputFormatClass(OrcInputFormat.class);
+        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp" + System.currentTimeMillis()));
 //        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230804/*"));
 //        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/"+System.currentTimeMillis()));
 
