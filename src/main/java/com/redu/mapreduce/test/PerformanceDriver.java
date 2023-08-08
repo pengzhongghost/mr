@@ -3,8 +3,8 @@ package com.redu.mapreduce.test;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.orc.mapreduce.OrcInputFormat;
 
 import java.io.IOException;
 import java.net.URI;
@@ -47,12 +47,13 @@ public class PerformanceDriver {
         job.setOutputValueClass(EmployeePerformanceVO.class);
 
         // 加载缓存数据
-        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230806/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230807/redu_user__d62f3ac0_5030_4777_bf77_bf452bdc7da0"));
 
         // 6 设置输入和输出路径
-        //FileInputFormat.setInputPaths(job, );
-        OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_temp/*"));
-        job.setInputFormatClass(OrcInputFormat.class);
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230807/*"));
+        //FileInputFormat.setInputPaths();
+        //OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/*"));
+        //job.setInputFormatClass(OrcInputFormat.class);
         FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp" + System.currentTimeMillis()));
 //        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230804/*"));
 //        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/"+System.currentTimeMillis()));

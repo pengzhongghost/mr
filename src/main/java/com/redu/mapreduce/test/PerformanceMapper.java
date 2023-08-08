@@ -4,6 +4,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
@@ -22,6 +23,7 @@ import java.util.*;
  * @author pengzhong
  * @since 2023/8/2
  */
+@Slf4j
 public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO> {
 
     private DimensionVO outK = new DimensionVO();
@@ -70,98 +72,103 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
     protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
         outV = new EmployeePerformanceVO();
         String line = value.toString();
-        String[] split = line.split("\u0001");
-        String platformCode = split[1];
-        String appletPeg = split[3];
-        List<String> appletList = Arrays.asList(appletPeg.split(","));
-        if (("1".equals(platformCode) && appletList.contains("1"))
-                || ("2".equals(platformCode) && appletList.contains("0"))
-                || "4".equals(platformCode)) {
-            String orderStatus = split[2];
-            String estimateSettlementAmount = split[24];
-            String finalServiceIncome = split[56];
-            String achievementsArderMultiple = split[37];
-            String estimateServiceIncome = split[27];
-            //String channelId = split[50];
-            String partnerId = split[46];
-            //String partnerName = split[135];
-            String partnerDeptIdPath = split[48];
-            String partnerDeptNamePath = split[49];
-            String paidTime = split[5];
-            if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
-                return;
-            }
-            String statisticsTime = DateUtil.format(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT), DatePattern.NORM_MONTH_FORMATTER);
-            if (!paidMonth.equals(statisticsTime)) {
-                return;
-            }
-            //1.平台
-            if (StrUtil.isEmpty(platformCode)) {
-                outV.setPlatform("-");
-            }
-            switch (platformCode) {
-                case "1":
-                    outV.setPlatform("dy");
-                    break;
-                case "2":
-                    outV.setPlatform("ks");
-                    break;
-                case "4":
-                    outV.setPlatform("wx");
-                    break;
-                default:
+        try {
+            String[] split = line.split("\u0001");
+            String platformCode = split[1];
+            String appletPeg = split[3];
+            List<String> appletList = Arrays.asList(appletPeg.split(","));
+            if (("1".equals(platformCode) && appletList.contains("1"))
+                    || ("2".equals(platformCode) && appletList.contains("0"))
+                    || "4".equals(platformCode)) {
+                String orderStatus = split[2];
+                String estimateSettlementAmount = split[24];
+                String finalServiceIncome = split[56];
+                String achievementsArderMultiple = split[37];
+                String estimateServiceIncome = split[27];
+                //String channelId = split[50];
+                String partnerId = split[46];
+                //String partnerName = split[135];
+                String partnerDeptIdPath = split[48];
+                String partnerDeptNamePath = split[49];
+                String paidTime = split[5];
+                if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
+                    return;
+                }
+                String statisticsTime = DateUtil.format(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT), DatePattern.NORM_MONTH_FORMATTER);
+                if (!paidMonth.equals(statisticsTime)) {
+                    return;
+                }
+                //1.平台
+                if (StrUtil.isEmpty(platformCode)) {
                     outV.setPlatform("-");
+                }
+                switch (platformCode) {
+                    case "1":
+                        outV.setPlatform("dy");
+                        break;
+                    case "2":
+                        outV.setPlatform("ks");
+                        break;
+                    case "4":
+                        outV.setPlatform("wx");
+                        break;
+                    default:
+                        outV.setPlatform("-");
+                }
+                //2.订单数量和gmv
+                if ("4".equals(orderStatus)) {
+                    outV.setFundOrderCount(1);
+                    outV.setFundOrderGmv(estimateSettlementAmount);
+                } else {
+                    outV.setValidOrderNum(1);
+                    outV.setValidServiceIncome(finalServiceIncome);
+                    outV.setOrderAchievementSum(achievementsArderMultiple);
+                }
+                outV.setGmv(estimateSettlementAmount);
+                outV.setEstimateServiceIncome(estimateServiceIncome);
+                //3.招商
+                if (NumberUtil.isNumber(partnerId)) {
+                    outV.setUserId(Long.parseLong(partnerId));
+                    outK.setUserId(Long.parseLong(partnerId));
+                } else {
+                    outK.setUserId(0);
+                }
+                outV.setRoleType(1);
+                outV.setOrderCount(1);
+                //工号
+                EmployeeVO employee = userMap.get(partnerId);
+                if (null != employee) {
+                    outV.setEmployeeNo(employee.getEmployeeNo());
+                    outV.setEmployeeName(employee.getName());
+                    outK.setEmployeeNo(employee.getEmployeeNo());
+                } else {
+                    outK.setEmployeeNo("0");
+                }
+                //4.部门信息
+                outV.setDeptIdPath(partnerDeptIdPath);
+                String[] partnerIds = partnerDeptIdPath.split("/");
+                if (partnerIds.length >= 5) {
+                    outV.setTeamId(Integer.parseInt(partnerIds[2]));
+                    outV.setBranchId(Integer.parseInt(partnerIds[3]));
+                    outV.setGroupId(Integer.parseInt(partnerIds[4]));
+                }
+                outV.setDeptNamePath(partnerDeptNamePath);
+                String[] partnerNames = partnerDeptNamePath.split("/");
+                if (partnerNames.length >= 5) {
+                    outV.setTeamName(partnerNames[2]);
+                    outV.setBranchName(partnerNames[3]);
+                    outV.setGroupName(partnerNames[4]);
+                }
+                //5.统计时间
+                outV.setStatisticsTime(statisticsTime);
+                outK.setPlatform(platformCode);
+                outK.setRoleType(1);
+                outK.setStatisticsTime(statisticsTime);
+                context.write(outK, outV);
             }
-            //2.订单数量和gmv
-            if ("4".equals(orderStatus)) {
-                outV.setFundOrderCount(1);
-                outV.setFundOrderGmv(estimateSettlementAmount);
-            } else {
-                outV.setValidOrderNum(1);
-                outV.setValidServiceIncome(finalServiceIncome);
-                outV.setOrderAchievementSum(achievementsArderMultiple);
-            }
-            outV.setGmv(estimateSettlementAmount);
-            outV.setEstimateServiceIncome(estimateServiceIncome);
-            //3.招商
-            if (NumberUtil.isNumber(partnerId)) {
-                outV.setUserId(Long.parseLong(partnerId));
-                outK.setUserId(Long.parseLong(partnerId));
-            } else {
-                outK.setUserId(0);
-            }
-            outV.setRoleType(1);
-            outV.setOrderCount(1);
-            //工号
-            EmployeeVO employee = userMap.get(partnerId);
-            if (null != employee) {
-                outV.setEmployeeNo(employee.getEmployeeNo());
-                outV.setEmployeeName(employee.getName());
-                outK.setEmployeeNo(employee.getEmployeeNo());
-            } else {
-                outK.setEmployeeNo("0");
-            }
-            //4.部门信息
-            outV.setDeptIdPath(partnerDeptIdPath);
-            String[] partnerIds = partnerDeptIdPath.split("/");
-            if (partnerIds.length >= 5) {
-                outV.setTeamId(Integer.parseInt(partnerIds[2]));
-                outV.setBranchId(Integer.parseInt(partnerIds[3]));
-                outV.setGroupId(Integer.parseInt(partnerIds[4]));
-            }
-            outV.setDeptNamePath(partnerDeptNamePath);
-            String[] partnerNames = partnerDeptNamePath.split("/");
-            if (partnerNames.length >= 5) {
-                outV.setTeamName(partnerNames[2]);
-                outV.setBranchName(partnerNames[3]);
-                outV.setGroupName(partnerNames[4]);
-            }
-            //5.统计时间
-            outV.setStatisticsTime(statisticsTime);
-            outK.setPlatform(platformCode);
-            outK.setRoleType(1);
-            outK.setStatisticsTime(statisticsTime);
-            context.write(outK, outV);
+        } catch (Exception e) {
+            System.out.println("彭钟调试PerformanceMapper line" + e.getMessage());
+            System.out.println("彭钟调试PerformanceMapper line : " + line);
         }
     }
 }
