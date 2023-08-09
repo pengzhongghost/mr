@@ -120,23 +120,23 @@ public class EmployeePerformanceVO implements Writable {
     public String toString() {
         return
                 teamName + "," +
-                        teamId +
+                        teamId + "," +
                         branchName + "," +
-                        branchId +
+                        branchId + "," +
                         groupName + "," +
-                        groupId +
+                        groupId + "," +
                         deptIdPath + "," +
                         deptNamePath + "," +
                         employeeName + "," +
                         statisticsTime + "," +
                         platform + "," +
-                        orderCount +
-                        fundOrderCount +
-                        validOrderNum +
+                        orderCount + "," +
+                        fundOrderCount + "," +
+                        validOrderNum + "," +
                         gmv + "," +
                         fundOrderGmv + "," +
                         validServiceIncome + "," +
-                        roleType +
+                        roleType + "," +
                         employeeNo + "," +
                         orderAchievementSum + "," +
                         estimateServiceIncome + "," +
