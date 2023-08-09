@@ -4,6 +4,7 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
@@ -35,6 +36,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
      */
     private final Map<String, EmployeeVO> userMap = new HashMap<>();
 
+    private final Map<String, String> userDeptOriginMap = new HashMap<>();
+
     private String paidMonth;
 
     @Override
@@ -42,17 +45,20 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         //1.获取redu_user表中的相关信息
         // 获取缓存的文件，并把文件内容封装到集合
         URI[] cacheFiles = context.getCacheFiles();
-        Reader in = OrcFile.createReader(new Path(cacheFiles[0]), OrcFile.readerOptions(context.getConfiguration()));
+        Reader userReader = OrcFile.createReader(new Path(cacheFiles[0]), OrcFile.readerOptions(context.getConfiguration()));
+        Reader userDeptOriginReader = OrcFile.createReader(new Path(cacheFiles[1]), OrcFile.readerOptions(context.getConfiguration()));
         // 解析schema
-        VectorizedRowBatch inBatch = in.getSchema().createRowBatch();
+        VectorizedRowBatch userInBatch = userReader.getSchema().createRowBatch();
+        VectorizedRowBatch userDeptOriginBatch = userDeptOriginReader.getSchema().createRowBatch();
         // 流解析文件
-        RecordReader rows = in.rows();
-        while (rows.nextBatch(inBatch)) {   // 读1个batch
+        //1)user表
+        RecordReader rows = userReader.rows();
+        while (rows.nextBatch(userInBatch)) {   // 读1个batch
             // 列式读取
-            LongColumnVector userId = (LongColumnVector) inBatch.cols[0];
-            BytesColumnVector name = (BytesColumnVector) inBatch.cols[2];
-            BytesColumnVector employeeNo = (BytesColumnVector) inBatch.cols[8];
-            for (int i = 0; i < inBatch.size; i++) {
+            LongColumnVector userId = (LongColumnVector) userInBatch.cols[0];
+            BytesColumnVector name = (BytesColumnVector) userInBatch.cols[2];
+            BytesColumnVector employeeNo = (BytesColumnVector) userInBatch.cols[8];
+            for (int i = 0; i < userInBatch.size; i++) {
                 // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
                 EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
                         .employeeNo(new String(employeeNo.vector[i], employeeNo.start[i], employeeNo.length[i]))
@@ -60,9 +66,23 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 userMap.put(employee.getUserId(), employee);
             }
         }
+        //2)userDeptOrigin
+        RecordReader userDeptOriginrows = userDeptOriginReader.rows();
+        while (userDeptOriginrows.nextBatch(userDeptOriginBatch)) {   // 读1个batch
+            // 列式读取
+            for (int i = 0; i < userDeptOriginBatch.size; i++) {
+                String fid = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[1]).vector[i]);
+                String reduId = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[3]).vector[i]);
+                BytesColumnVector typeColumn = (BytesColumnVector) userDeptOriginBatch.cols[2];
+                String type = new String(typeColumn.vector[i], typeColumn.start[i], typeColumn.length[i]);
+                BytesColumnVector fromTableColum = (BytesColumnVector) userDeptOriginBatch.cols[5];
+                String fromTable = new String(fromTableColum.vector[i], fromTableColum.start[i], fromTableColum.length[i]);
+                userDeptOriginMap.put(type + "|" + fromTable + "|" + fid, reduId);
+            }
+        }
         rows.close();
         // 关流
-        IOUtils.closeStream(in);
+        IOUtils.closeStream(userReader);
         //2.付款时间
         paidMonth = context.getConfiguration().get("paid_month");
     }
@@ -77,9 +97,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             String platformCode = split[1];
             String appletPeg = split[3];
             List<String> appletList = Arrays.asList(appletPeg.split(","));
-            if ("1".equals(platformCode) || "2".equals(platformCode)) {
-                System.out.println("PerformanceMapper orderid:" + split[2] + "|platform:" + platformCode +"|applet:" + appletPeg);
-            }
             if (("1".equals(platformCode) && appletList.contains("1"))
                     || ("2".equals(platformCode) && appletList.contains("0"))
                     || "4".equals(platformCode)) {
@@ -89,7 +106,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String achievementsArderMultiple = split[37];
                 String estimateServiceIncome = split[27];
                 //String channelId = split[50];
-                String partnerId = split[46];
+                OrderExtVO orderExt = JSONUtil.toBean(split[62], OrderExtVO.class);
+                String partnerId = userDeptOriginMap.get("USER|PARTNER|" + orderExt.getHiPartnerid());
                 //String partnerName = split[135];
                 String partnerDeptIdPath = split[48];
                 String partnerDeptNamePath = split[49];
@@ -172,32 +190,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         } catch (Exception e) {
             System.out.println("彭钟调试PerformanceMapper line" + e.getMessage());
             System.out.println("彭钟调试PerformanceMapper line : " + line);
-        }
-    }
-
-    public static void main(String[] args) {
-        String msg = "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1,5\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:4|platform:1|applet:5\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1,5\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:7,11\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:7,11\n" +
-                "PerformanceMapper orderid:4|platform:1|applet:7,1,4\n" +
-                "PerformanceMapper orderid:3|platform:1|applet:1\n";
-        String platformCode = "1";
-        String appletPeg = "7,1,4";
-        List<String> appletList = Arrays.asList(appletPeg.split(","));
-        if (("1".equals(platformCode) && appletList.contains("1"))
-                || ("2".equals(platformCode) && appletList.contains("0"))
-                || "4".equals(platformCode)) {
-            System.out.println(platformCode);
-        } else {
-            System.out.println("你好");
         }
     }
 
