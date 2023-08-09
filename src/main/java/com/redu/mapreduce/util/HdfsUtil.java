@@ -15,8 +15,12 @@ import java.util.List;
  */
 public class HdfsUtil {
 
-    private static final String HDFS = "hdfs://localhost:9000/";
+    private static final String HDFS = "hdfs://hadoop001:9000/";
     private static final Configuration conf = new Configuration();
+
+    static {
+        conf.setBoolean("fs.hdfs.impl.disable.cache", true);
+    }
 
     /**
      * 创建文件夹
@@ -73,8 +77,12 @@ public class HdfsUtil {
         for (FileStatus f : list) {
             pathList.add(f.getPath());
         }
-        fs.close();
         return pathList;
+    }
+
+    public static void close() throws Exception {
+        FileSystem fs = FileSystem.get(URI.create(HDFS), conf);
+        fs.close();
     }
 
     /**

@@ -19,6 +19,7 @@ import org.apache.orc.RecordReader;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -43,63 +44,67 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-        //1.获取redu_user表中的相关信息
-        // 获取缓存的文件，并把文件内容封装到集合
-        URI[] cacheFiles = context.getCacheFiles();
-        URI uri01 = cacheFiles[0];
-        String dirName01 = uri01.toString().split("/\\*")[0];
-        List<Path> paths = HdfsUtil.ls(dirName01);
-        for (Path path : paths) {
-            Reader userReader = OrcFile.createReader(path, OrcFile.readerOptions(context.getConfiguration()));
-            // 解析schema
-            VectorizedRowBatch userInBatch = userReader.getSchema().createRowBatch();
-            // 流解析文件
-            //1)user表
-            RecordReader rows = userReader.rows();
-            while (rows.nextBatch(userInBatch)) {   // 读1个batch
-                // 列式读取
-                LongColumnVector userId = (LongColumnVector) userInBatch.cols[0];
-                BytesColumnVector name = (BytesColumnVector) userInBatch.cols[2];
-                BytesColumnVector employeeNo = (BytesColumnVector) userInBatch.cols[8];
-                for (int i = 0; i < userInBatch.size; i++) {
-                    // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
-                    EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
-                            .employeeNo(new String(employeeNo.vector[i], employeeNo.start[i], employeeNo.length[i]))
-                            .name(new String(name.vector[i], name.start[i], name.length[i])).build();
-                    userMap.put(employee.getUserId(), employee);
+        try {
+            //1.获取redu_user表中的相关信息
+            // 获取缓存的文件，并把文件内容封装到集合
+            URI[] cacheFiles = context.getCacheFiles();
+            URI uri01 = cacheFiles[0];
+            String dirName01 = uri01.toString().split("/\\*")[0];
+            List<Path> paths = HdfsUtil.ls(dirName01);
+            for (Path path : paths) {
+                Reader userReader = OrcFile.createReader(path, OrcFile.readerOptions(context.getConfiguration()));
+                // 解析schema
+                VectorizedRowBatch userInBatch = userReader.getSchema().createRowBatch();
+                // 流解析文件
+                //1)user表
+                RecordReader rows = userReader.rows();
+                while (rows.nextBatch(userInBatch)) {   // 读1个batch
+                    // 列式读取
+                    LongColumnVector userId = (LongColumnVector) userInBatch.cols[0];
+                    BytesColumnVector name = (BytesColumnVector) userInBatch.cols[2];
+                    BytesColumnVector employeeNo = (BytesColumnVector) userInBatch.cols[8];
+                    for (int i = 0; i < userInBatch.size; i++) {
+                        // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
+                        EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
+                                .employeeNo(new String(employeeNo.vector[i], employeeNo.start[i], employeeNo.length[i]))
+                                .name(new String(name.vector[i], name.start[i], name.length[i])).build();
+                        userMap.put(employee.getUserId(), employee);
+                    }
                 }
+                rows.close();
+                // 关流
+                IOUtils.closeStream(userReader);
             }
-            rows.close();
-            // 关流
-            IOUtils.closeStream(userReader);
-        }
-        //2.获取user_dept_origin中的信息
-        URI uri02 = cacheFiles[0];
-        String dirName02 = uri02.toString().split("/\\*")[0];
-        List<Path> path02s = HdfsUtil.ls(dirName02);
-        for (Path path02 : path02s) {
-            Reader userDeptOriginReader = OrcFile.createReader(path02, OrcFile.readerOptions(context.getConfiguration()));
-            VectorizedRowBatch userDeptOriginBatch = userDeptOriginReader.getSchema().createRowBatch();
-            //2)userDeptOrigin
-            RecordReader userDeptOriginrows = userDeptOriginReader.rows();
-            while (userDeptOriginrows.nextBatch(userDeptOriginBatch)) {   // 读1个batch
-                // 列式读取
-                for (int i = 0; i < userDeptOriginBatch.size; i++) {
-                    String fid = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[1]).vector[i]);
-                    String reduId = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[3]).vector[i]);
-                    BytesColumnVector typeColumn = (BytesColumnVector) userDeptOriginBatch.cols[2];
-                    String type = new String(typeColumn.vector[i], typeColumn.start[i], typeColumn.length[i]);
-                    BytesColumnVector fromTableColum = (BytesColumnVector) userDeptOriginBatch.cols[5];
-                    String fromTable = new String(fromTableColum.vector[i], fromTableColum.start[i], fromTableColum.length[i]);
-                    userDeptOriginMap.put(type + "|" + fromTable + "|" + fid, reduId);
+            //2.获取user_dept_origin中的信息
+            URI uri02 = cacheFiles[1];
+            String dirName02 = uri02.toString().split("/\\*")[0];
+            List<Path> path02s = HdfsUtil.ls(dirName02);
+            for (Path path02 : path02s) {
+                Reader userDeptOriginReader = OrcFile.createReader(path02, OrcFile.readerOptions(context.getConfiguration()));
+                VectorizedRowBatch userDeptOriginBatch = userDeptOriginReader.getSchema().createRowBatch();
+                //2)userDeptOrigin
+                RecordReader userDeptOriginrows = userDeptOriginReader.rows();
+                while (userDeptOriginrows.nextBatch(userDeptOriginBatch)) {   // 读1个batch
+                    // 列式读取
+                    for (int i = 0; i < userDeptOriginBatch.size; i++) {
+                        String fid = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[1]).vector[i]);
+                        String reduId = String.valueOf(((LongColumnVector) userDeptOriginBatch.cols[3]).vector[i]);
+                        BytesColumnVector typeColumn = (BytesColumnVector) userDeptOriginBatch.cols[2];
+                        String type = new String(typeColumn.vector[i], typeColumn.start[i], typeColumn.length[i]);
+                        BytesColumnVector fromTableColum = (BytesColumnVector) userDeptOriginBatch.cols[5];
+                        String fromTable = new String(fromTableColum.vector[i], fromTableColum.start[i], fromTableColum.length[i]);
+                        userDeptOriginMap.put(type + "|" + fromTable + "|" + fid, reduId);
+                    }
                 }
+                userDeptOriginrows.close();
+                // 关流
+                IOUtils.closeStream(userDeptOriginReader);
             }
-            userDeptOriginrows.close();
-            // 关流
-            IOUtils.closeStream(userDeptOriginReader);
+            //2.付款时间
+            paidMonth = context.getConfiguration().get("paid_month");
+        } catch (Exception e) {
+            System.out.println("PerformanceMapper setUp: " + e.getMessage());
         }
-        //2.付款时间
-        paidMonth = context.getConfiguration().get("paid_month");
     }
 
 
@@ -205,6 +210,15 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         } catch (Exception e) {
             System.out.println("彭钟调试PerformanceMapper line" + e.getMessage());
             System.out.println("彭钟调试PerformanceMapper line : " + line);
+        }
+    }
+
+    @Override
+    protected void cleanup(Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
+        try {
+            HdfsUtil.close();
+        } catch (Exception e) {
+            System.out.println("PerformanceMapper close: " + e.getMessage());
         }
     }
 

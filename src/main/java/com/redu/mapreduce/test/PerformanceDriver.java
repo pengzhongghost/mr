@@ -1,5 +1,7 @@
 package com.redu.mapreduce.test;
 
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -9,6 +11,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * @author pengzhong
@@ -46,17 +50,22 @@ public class PerformanceDriver {
         job.setOutputKeyClass(DimensionVO.class);
         job.setOutputValueClass(EmployeePerformanceVO.class);
 
+        String ds = LocalDate.now().minusDays(1).format(DatePattern.PURE_DATE_FORMATTER);
+
         // 加载缓存数据
-        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230808/redu_user__37227609_41aa_4fbf_8355_d27e90f7c063"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=" + ds + "/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/user_dept_origin/ds=" + ds + "/*"));
+//        job.addCacheFile(new URI("file:///Users/pengzhong/Downloads/redu_user"));
+//        job.addCacheFile(new URI("file:///Users/pengzhong/Downloads/user_dept_origin"));
 
         // 6 设置输入和输出路径
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230808/*"));
+        //TextInputFormat.setInputPaths(job, new Path("/Users/pengzhong/Downloads/redu_order_tmp__a7368047_80e3_461d_9465_dc3a7dddc71d"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=" + ds + "/*"));
         //FileInputFormat.setInputPaths();
         //OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/*"));
         //job.setInputFormatClass(OrcInputFormat.class);
-        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp" + System.currentTimeMillis()));
-//        FileInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230804/*"));
-//        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/"+System.currentTimeMillis()));
+        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/performance" + System.currentTimeMillis()));
+        //FileOutputFormat.setOutputPath(job, new Path("/Users/pengzhong/Downloads/performance_temp" + System.currentTimeMillis()));
 
         // 7 提交
         boolean result = job.waitForCompletion(true);
