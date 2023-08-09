@@ -47,10 +47,10 @@ public class PerformanceDriver {
         job.setOutputValueClass(EmployeePerformanceVO.class);
 
         // 加载缓存数据
-        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230807/redu_user__d62f3ac0_5030_4777_bf77_bf452bdc7da0"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=20230808/redu_user__37227609_41aa_4fbf_8355_d27e90f7c063"));
 
         // 6 设置输入和输出路径
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230807/*"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=20230808/*"));
         //FileInputFormat.setInputPaths();
         //OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/*"));
         //job.setInputFormatClass(OrcInputFormat.class);

@@ -77,6 +77,9 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             String platformCode = split[1];
             String appletPeg = split[3];
             List<String> appletList = Arrays.asList(appletPeg.split(","));
+            if ("1".equals(platformCode) || "2".equals(platformCode)) {
+                System.out.println("PerformanceMapper orderid:" + split[2] + "|platform:" + platformCode +"|applet:" + appletPeg);
+            }
             if (("1".equals(platformCode) && appletList.contains("1"))
                     || ("2".equals(platformCode) && appletList.contains("0"))
                     || "4".equals(platformCode)) {
@@ -171,4 +174,31 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             System.out.println("彭钟调试PerformanceMapper line : " + line);
         }
     }
+
+    public static void main(String[] args) {
+        String msg = "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1,5\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:4|platform:1|applet:5\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1,5\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:7,11\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:7,11\n" +
+                "PerformanceMapper orderid:4|platform:1|applet:7,1,4\n" +
+                "PerformanceMapper orderid:3|platform:1|applet:1\n";
+        String platformCode = "1";
+        String appletPeg = "7,1,4";
+        List<String> appletList = Arrays.asList(appletPeg.split(","));
+        if (("1".equals(platformCode) && appletList.contains("1"))
+                || ("2".equals(platformCode) && appletList.contains("0"))
+                || "4".equals(platformCode)) {
+            System.out.println(platformCode);
+        } else {
+            System.out.println("你好");
+        }
+    }
+
 }
