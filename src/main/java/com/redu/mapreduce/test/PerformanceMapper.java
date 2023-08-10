@@ -19,7 +19,6 @@ import org.apache.orc.RecordReader;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -39,6 +38,13 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
     private final Map<String, EmployeeVO> userMap = new HashMap<>();
 
     private final Map<String, String> userDeptOriginMap = new HashMap<>();
+
+    /**
+     * <热度小组id,php小组id>用于中转的map
+     */
+    private final Map<String, String> groupIdMap = new HashMap<>();
+
+    private final Map<String, DeptVO> deptMap = new HashMap<>();
 
     private String paidMonth;
 
@@ -94,13 +100,62 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                         BytesColumnVector fromTableColum = (BytesColumnVector) userDeptOriginBatch.cols[5];
                         String fromTable = new String(fromTableColum.vector[i], fromTableColum.start[i], fromTableColum.length[i]);
                         userDeptOriginMap.put(type + "|" + fromTable + "|" + fid, reduId);
+                        if ("DEPT".equals(type) && "GROUP".equals(fromTable)) {
+                            groupIdMap.put(reduId, type + "|" + fromTable + "|" + fid);
+                        }
                     }
                 }
                 userDeptOriginrows.close();
                 // 关流
                 IOUtils.closeStream(userDeptOriginReader);
             }
-            //2.付款时间
+            //3.获取user表中的信息
+            URI uri03 = cacheFiles[2];
+            String dirName03 = uri03.toString().split("/\\*")[0];
+            List<Path> path03s = HdfsUtil.ls(dirName03);
+            for (Path path03 : path03s) {
+                Reader deptReader = OrcFile.createReader(path03, OrcFile.readerOptions(context.getConfiguration()));
+                VectorizedRowBatch deptBatch = deptReader.getSchema().createRowBatch();
+                //3)dept
+                RecordReader deptRows = deptReader.rows();
+                while (deptRows.nextBatch(deptBatch)) {   // 读1个batch
+                    // 列式读取
+                    for (int i = 0; i < deptBatch.size; i++) {
+                        //从dept中获取
+                        String id = String.valueOf(((LongColumnVector) deptBatch.cols[0]).vector[i]);
+                        String key = groupIdMap.get(id);
+                        if (StrUtil.isNotEmpty(key)) {
+                            //idPath,namePath
+                            BytesColumnVector idPathColumn = (BytesColumnVector) deptBatch.cols[4];
+                            String idPath = new String(idPathColumn.vector[i], idPathColumn.start[i], idPathColumn.length[i]);
+                            String[] idSplit = idPath.split("/");
+                            BytesColumnVector namePathColumn = (BytesColumnVector) deptBatch.cols[4];
+                            String namePath = new String(namePathColumn.vector[i], namePathColumn.start[i], namePathColumn.length[i]);
+                            String[] nameSplit = namePath.split("/");
+                            DeptVO dept = new DeptVO();
+                            if (idSplit.length > 2) {
+                                dept.setTeamId(Integer.parseInt(idSplit[2]));
+                                dept.setTeamName(nameSplit[2]);
+                                if (idSplit.length > 3) {
+                                    dept.setBranchId(Integer.parseInt(idSplit[3]));
+                                    dept.setBranchName(nameSplit[3]);
+                                    if (idSplit.length > 4) {
+                                        dept.setGroupId(Integer.parseInt(idSplit[4]));
+                                        dept.setGroupName(nameSplit[4]);
+                                    }
+                                }
+                            }
+                            dept.setDeptIdPath(idPath);
+                            dept.setDeptNamePath(namePath);
+                            deptMap.put(key, dept);
+                        }
+                    }
+                }
+                deptRows.close();
+                // 关流
+                IOUtils.closeStream(deptReader);
+            }
+            //4.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
         } catch (Exception e) {
             System.out.println("PerformanceMapper setUp: " + e.getMessage());
@@ -186,19 +241,16 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     outK.setEmployeeNo("0");
                 }
                 //4.部门信息
-                outV.setDeptIdPath(partnerDeptIdPath);
-                String[] partnerIds = partnerDeptIdPath.split("/");
-                if (partnerIds.length >= 5) {
-                    outV.setTeamId(Integer.parseInt(partnerIds[2]));
-                    outV.setBranchId(Integer.parseInt(partnerIds[3]));
-                    outV.setGroupId(Integer.parseInt(partnerIds[4]));
-                }
-                outV.setDeptNamePath(partnerDeptNamePath);
-                String[] partnerNames = partnerDeptNamePath.split("/");
-                if (partnerNames.length >= 5) {
-                    outV.setTeamName(partnerNames[2]);
-                    outV.setBranchName(partnerNames[3]);
-                    outV.setGroupName(partnerNames[4]);
+                DeptVO dept = deptMap.get("DEPT|GROUP|" + orderExt.getHiPartnerid());
+                if (null != dept) {
+                    outV.setDeptIdPath(dept.getDeptIdPath());
+                    outV.setTeamId(dept.getTeamId());
+                    outV.setBranchId(dept.getBranchId());
+                    outV.setGroupId(dept.getGroupId());
+                    outV.setDeptNamePath(dept.getDeptNamePath());
+                    outV.setTeamName(dept.getTeamName());
+                    outV.setBranchName(dept.getBranchName());
+                    outV.setGroupName(dept.getGroupName());
                 }
                 //5.统计时间
                 outV.setStatisticsTime(statisticsTime);
