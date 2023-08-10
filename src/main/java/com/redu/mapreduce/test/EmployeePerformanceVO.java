@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -18,7 +20,7 @@ import java.lang.reflect.Field;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeePerformanceVO implements Writable {
+public class EmployeePerformanceVO implements WritableComparable<EmployeePerformanceVO> {
 
     private String teamName;
 
@@ -165,4 +167,8 @@ public class EmployeePerformanceVO implements Writable {
         System.out.println(intPut);
     }
 
+    @Override
+    public int compareTo(@NotNull EmployeePerformanceVO o) {
+        return 0;
+    }
 }
