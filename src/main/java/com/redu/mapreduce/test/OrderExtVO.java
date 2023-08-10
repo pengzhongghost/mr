@@ -15,4 +15,6 @@ public class OrderExtVO {
 
     private String hiPartnerid;
 
+    private String partnerGroupId;
+
 }

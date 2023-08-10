@@ -129,7 +129,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                             BytesColumnVector idPathColumn = (BytesColumnVector) deptBatch.cols[4];
                             String idPath = new String(idPathColumn.vector[i], idPathColumn.start[i], idPathColumn.length[i]);
                             String[] idSplit = idPath.split("/");
-                            BytesColumnVector namePathColumn = (BytesColumnVector) deptBatch.cols[4];
+                            BytesColumnVector namePathColumn = (BytesColumnVector) deptBatch.cols[5];
                             String namePath = new String(namePathColumn.vector[i], namePathColumn.start[i], namePathColumn.length[i]);
                             String[] nameSplit = namePath.split("/");
                             DeptVO dept = new DeptVO();
@@ -241,7 +241,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     outK.setEmployeeNo("0");
                 }
                 //4.部门信息
-                DeptVO dept = deptMap.get("DEPT|GROUP|" + orderExt.getHiPartnerid());
+                DeptVO dept = deptMap.get("DEPT|GROUP|" + orderExt.getPartnerGroupId());
                 if (null != dept) {
                     outV.setDeptIdPath(dept.getDeptIdPath());
                     outV.setTeamId(dept.getTeamId());
