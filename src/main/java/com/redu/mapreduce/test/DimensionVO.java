@@ -30,6 +30,8 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
 
     private String statisticsTime;
 
+    private long paidTime;
+
     @Override
     public String toString() {
         return "DimensionVO{" +
@@ -48,6 +50,7 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
         dataOutput.writeUTF(null == employeeNo ? "" : employeeNo);
         dataOutput.writeLong(userId);
         dataOutput.writeUTF(null == statisticsTime ? "" : statisticsTime);
+        dataOutput.writeLong(paidTime);
     }
 
     @Override
@@ -57,6 +60,7 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
         this.employeeNo = dataInput.readUTF();
         this.userId = dataInput.readLong();
         this.statisticsTime = dataInput.readUTF();
+        this.paidTime = dataInput.readLong();
     }
 
         @Override
@@ -72,7 +76,11 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
                             long userIdCmp = this.userId - o.getUserId();
                             if (0 == userIdCmp) {
                                 if (null != statisticsTime && null != o.getStatisticsTime()) {
-                                    return statisticsTime.compareTo(o.getStatisticsTime());
+                                    int statisticTimeCmp = statisticsTime.compareTo(o.getStatisticsTime());
+                                    if (0 == statisticTimeCmp) {
+                                        return (int) (this.paidTime - o.getPaidTime());
+                                    }
+                                    return statisticTimeCmp;
                                 }
                             }
                             return (int) userIdCmp;

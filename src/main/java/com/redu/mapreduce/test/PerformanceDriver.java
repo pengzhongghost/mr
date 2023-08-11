@@ -62,6 +62,9 @@ public class PerformanceDriver {
         // 加载缓存数据
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_user/ds=" + ds + "/*"));
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/user_dept_origin/ds=" + ds + "/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_dept/ds=" + ds + "/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config/ds=" + ds + "/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config_item/ds=" + ds + "/*"));
 //        job.addCacheFile(new URI("file:///Users/pengzhong/Downloads/redu_user"));
 //        job.addCacheFile(new URI("file:///Users/pengzhong/Downloads/user_dept_origin"));
 
@@ -75,7 +78,10 @@ public class PerformanceDriver {
         job.setOutputFormatClass(OrcOutputFormat.class);
         OrcOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/" + System.currentTimeMillis()));
         //FileOutputFormat.setOutputPath(job, new Path("/Users/pengzhong/Downloads/performance_temp" + System.currentTimeMillis()));
-
+        //第一次排序的
+        //job.setSortComparatorClass(MapOutValueComparator.class);
+        //第二次分组排序的
+        job.setGroupingComparatorClass(MapOutValueComparator.class);
         // 7 提交
         boolean result = job.waitForCompletion(true);
 

@@ -20,7 +20,7 @@ import java.lang.reflect.Field;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeePerformanceVO implements WritableComparable<EmployeePerformanceVO> {
+public class EmployeePerformanceVO implements Writable {
 
     private String teamName;
 
@@ -66,6 +66,10 @@ public class EmployeePerformanceVO implements WritableComparable<EmployeePerform
 
     private long userId;
 
+    private Long paidTime;
+
+    private String paidTimeStr;
+
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(null == teamName ? "" : teamName);
@@ -90,6 +94,7 @@ public class EmployeePerformanceVO implements WritableComparable<EmployeePerform
         dataOutput.writeUTF(null == orderAchievementSum || "\\N".equals(orderAchievementSum) ? "" : orderAchievementSum);
         dataOutput.writeUTF(null == estimateServiceIncome || "\\N".equals(estimateServiceIncome) ? "" : estimateServiceIncome);
         dataOutput.writeLong(userId);
+        dataOutput.writeUTF(paidTimeStr);
     }
 
     @Override
@@ -116,6 +121,7 @@ public class EmployeePerformanceVO implements WritableComparable<EmployeePerform
         this.orderAchievementSum = dataInput.readUTF();
         this.estimateServiceIncome = dataInput.readUTF();
         this.userId = dataInput.readLong();
+        this.paidTimeStr = dataInput.readUTF();
     }
 
     @Override
@@ -167,8 +173,4 @@ public class EmployeePerformanceVO implements WritableComparable<EmployeePerform
         System.out.println(intPut);
     }
 
-    @Override
-    public int compareTo(@NotNull EmployeePerformanceVO o) {
-        return 0;
-    }
 }

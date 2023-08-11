@@ -184,8 +184,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 OrderExtVO orderExt = JSONUtil.toBean(split[62], OrderExtVO.class);
                 String partnerId = userDeptOriginMap.get("USER|PARTNER|" + orderExt.getHiPartnerid());
                 //String partnerName = split[135];
-                String partnerDeptIdPath = split[48];
-                String partnerDeptNamePath = split[49];
                 String paidTime = split[5];
                 if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
                     return;
@@ -257,6 +255,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 outK.setPlatform(platformCode);
                 outK.setRoleType(1);
                 outK.setStatisticsTime(statisticsTime);
+                outK.setPaidTime(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT).getTime());
+                outV.setPaidTimeStr(paidTime);
                 context.write(outK, outV);
             }
         } catch (Exception e) {
