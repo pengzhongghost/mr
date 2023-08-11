@@ -82,7 +82,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private String configId;
 
-    private List<PerformanceConfigVO> configValues;
+    private static List<PerformanceConfigVO> configValues;
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
@@ -160,7 +160,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                         }
                         if (2 == rules.size()) {
                             PerformanceConfigVO.ConfigVO.RuleVO rule01 = rules.get(0);
-                            PerformanceConfigVO.ConfigVO.RuleVO rule02 = rules.get(0);
+                            PerformanceConfigVO.ConfigVO.RuleVO rule02 = rules.get(1);
                             if (OperatorUtil.compare(serviceFeeRate, rule01.getValue(), rule01.getOperator())
                                     && OperatorUtil.compare(serviceFeeRate, rule02.getValue(), rule02.getOperator())) {
                                 return config.getWeight();

@@ -11,13 +11,13 @@ public class OperatorUtil {
 
     public static boolean compare(BigDecimal tarNum, BigDecimal cmpNum, String operator) {
         switch (operator) {
-            case ">":
+            case "GT":
                 return tarNum.compareTo(cmpNum) > 0;
-            case ">=":
+            case "GE":
                 return tarNum.compareTo(cmpNum) >= 0;
-            case "<":
+            case "LT":
                 return tarNum.compareTo(cmpNum) < 0;
-            case "<=":
+            case "LE":
                 return tarNum.compareTo(cmpNum) <= 0;
         }
         return false;
