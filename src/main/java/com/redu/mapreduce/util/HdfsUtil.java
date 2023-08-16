@@ -119,6 +119,10 @@ public class HdfsUtil {
         fs.close();
     }
 
+    public static void main(String[] args) throws IOException {
+        copyFile("/Users/pengzhong/Downloads/929cbde2-dc3a-b976-eed6-0392f790a588_3630204239768888103.xlsx", "/export/douyin_order/929cbde2-dc3a-b976-eed6-0392f790a588_3630204239768888103.xlsx");
+    }
+
     /**
      * 从hdfs下载文件到本地
      *

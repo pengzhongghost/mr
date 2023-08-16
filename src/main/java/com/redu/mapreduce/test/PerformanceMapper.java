@@ -179,6 +179,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String estimateSettlementAmount = split[24];
                 String finalServiceIncome = split[56];
                 String achievementsArderMultiple = split[37];
+                String serviceFeeRate = split[26];
                 String estimateServiceIncome = split[27];
                 //String channelId = split[50];
                 OrderExtVO orderExt = JSONUtil.toBean(split[62], OrderExtVO.class);
@@ -257,6 +258,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 outK.setStatisticsTime(statisticsTime);
                 outK.setPaidTime(DateUtil.parse(paidTime, DatePattern.NORM_DATETIME_FORMAT).getTime());
                 outV.setPaidTimeStr(paidTime);
+                outV.setServiceFeeRate(serviceFeeRate);
                 context.write(outK, outV);
             }
         } catch (Exception e) {

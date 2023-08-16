@@ -21,6 +21,7 @@ import org.apache.orc.mapred.OrcStruct;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.util.List;
 
@@ -105,7 +106,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     String id = String.valueOf(((LongColumnVector) configInBatch.cols[0]).vector[i]);
                     BytesColumnVector keyColumn = (BytesColumnVector) configInBatch.cols[6];
                     String key = new String(keyColumn.vector[i], keyColumn.start[i], keyColumn.length[i]);
-                    if ("commission_config_partner_detail".equals(key)) {
+                    if ("commission_config_partner_order_weight_detail".equals(key)) {
                         configId = id;
                     }
                 }
@@ -146,7 +147,25 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         }
     }
 
+    /**
+     * 获取提成加权
+     *
+     * @param serviceFeeRate
+     * @param platform
+     * @return
+     */
     private BigDecimal getCommissionWeight(BigDecimal serviceFeeRate, String platform) {
+        switch (platform) {
+            case "dy":
+                platform = "douyin";
+                break;
+            case "ks":
+                platform = "kuaishou";
+                break;
+            case "wx":
+                platform = "weixin";
+                break;
+        }
         for (PerformanceConfigVO configValue : configValues) {
             if (platform.equals(configValue.getPlatform())) {
                 for (PerformanceConfigVO.ConfigVO config : configValue.getConfig()) {
@@ -186,6 +205,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         BigDecimal validServiceIncome = BigDecimal.ZERO;
         BigDecimal orderAchievementSum = BigDecimal.ZERO;
         BigDecimal estimateServiceIncome = BigDecimal.ZERO;
+        BigDecimal performanceCommission = BigDecimal.ZERO;
         for (EmployeePerformanceVO value : values) {
             try {
                 System.out.println(value.getEmployeeName() + " | " + value.getPaidTimeStr());
@@ -220,15 +240,21 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 validOrderNum += value.getValidOrderNum();
                 gmv = gmv.add(new BigDecimal(StrUtil.isEmpty(value.getGmv()) ? "0" : value.getGmv()));
                 fundOrderGmv = fundOrderGmv.add(new BigDecimal(StrUtil.isEmpty(value.getFundOrderGmv()) ? "0" : value.getFundOrderGmv()));
-                validServiceIncome = validServiceIncome.add(new BigDecimal(StrUtil.isEmpty(value.getValidServiceIncome()) ? "0" : value.getValidServiceIncome()));
+                BigDecimal finalServiceIncome = new BigDecimal(StrUtil.isEmpty(value.getValidServiceIncome()) ? "0" : value.getValidServiceIncome());
+                validServiceIncome = validServiceIncome.add(finalServiceIncome);
                 orderAchievementSum = orderAchievementSum.add(new BigDecimal(StrUtil.isEmpty(value.getOrderAchievementSum()) ? "0" : value.getOrderAchievementSum()));
                 estimateServiceIncome = estimateServiceIncome.add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome()));
-
-
+                if (!"0.0".equals(value.getServiceFeeRate())) {
+                    System.out.println(value);
+                }
+                BigDecimal serviceFeeRate = new BigDecimal(StrUtil.isEmpty(value.getServiceFeeRate()) ? "0" : value.getServiceFeeRate()).multiply(new BigDecimal(100));
+                BigDecimal commissionWeight = getCommissionWeight(serviceFeeRate, value.getPlatform());
+                if (null != commissionWeight) {
+                    performanceCommission = performanceCommission.add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 2, RoundingMode.FLOOR));
+                }
                 orcStruct.setFieldValue(17, intWritable04);
                 orcStruct.setFieldValue(18, text12);
                 orcStruct.setFieldValue(21, loneWritable04);
-
             } catch (Exception e) {
                 log.error("PerformanceReducer reduce", e);
                 log.error("PerformanceReducer reduce value:{}", JSONUtil.toJsonStr(value));

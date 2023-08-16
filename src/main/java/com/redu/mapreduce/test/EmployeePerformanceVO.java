@@ -4,8 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -70,6 +68,8 @@ public class EmployeePerformanceVO implements Writable {
 
     private String paidTimeStr;
 
+    private String serviceFeeRate;
+
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(null == teamName ? "" : teamName);
@@ -95,6 +95,7 @@ public class EmployeePerformanceVO implements Writable {
         dataOutput.writeUTF(null == estimateServiceIncome || "\\N".equals(estimateServiceIncome) ? "" : estimateServiceIncome);
         dataOutput.writeLong(userId);
         dataOutput.writeUTF(paidTimeStr);
+        dataOutput.writeUTF(serviceFeeRate);
     }
 
     @Override
@@ -122,6 +123,7 @@ public class EmployeePerformanceVO implements Writable {
         this.estimateServiceIncome = dataInput.readUTF();
         this.userId = dataInput.readLong();
         this.paidTimeStr = dataInput.readUTF();
+        this.serviceFeeRate = dataInput.readUTF();
     }
 
     @Override

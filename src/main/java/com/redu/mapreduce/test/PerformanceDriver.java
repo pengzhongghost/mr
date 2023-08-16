@@ -1,7 +1,6 @@
 package com.redu.mapreduce.test;
 
 import cn.hutool.core.date.DatePattern;
-import cn.hutool.core.date.DateUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * @author pengzhong
