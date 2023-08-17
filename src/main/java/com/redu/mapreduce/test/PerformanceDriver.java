@@ -68,9 +68,8 @@ public class PerformanceDriver {
 
         // 6 设置输入和输出路径
         //TextInputFormat.setInputPaths(job, new Path("/Users/pengzhong/Downloads/redu_order_tmp__a7368047_80e3_461d_9465_dc3a7dddc71d"));
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230808/*"));
-        //FileInputFormat.setInputPaths();
-        //OrcInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/*"));
+        //TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230808/*"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds + "/*"));
         //job.setInputFormatClass(OrcInputFormat.class);
         //FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/performance" + System.currentTimeMillis()));
         job.setOutputFormatClass(OrcOutputFormat.class);
