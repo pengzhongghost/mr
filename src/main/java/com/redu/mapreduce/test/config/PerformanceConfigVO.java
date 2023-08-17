@@ -1,4 +1,4 @@
-package com.redu.mapreduce.test;
+package com.redu.mapreduce.test.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,17 +30,6 @@ public class PerformanceConfigVO {
         private BigDecimal weight;
 
         private List<RuleVO> rules;
-
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class RuleVO{
-
-            private String operator;
-
-            private BigDecimal value;
-
-        }
 
     }
 

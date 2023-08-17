@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.redu.mapreduce.test.config.PerformanceConfigVO;
+import com.redu.mapreduce.test.config.RuleVO;
 import com.redu.mapreduce.util.HdfsUtil;
 import com.redu.mapreduce.util.OperatorUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -81,9 +83,17 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final LongWritable loneWritable04 = new LongWritable();
 
-    private String configId;
+    private String partnerPartConfigId;
 
-    private static List<PerformanceConfigVO> configValues;
+    private String partnerConfigId;
+
+    private String channelConfigId;
+
+    private static List<PerformanceConfigVO> partnerPartConfigValues;
+
+    private static List<PerformanceConfigVO> partnerConfigValues;
+
+    private static List<PerformanceConfigVO> channelConfigValues;
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
@@ -106,8 +116,17 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     String id = String.valueOf(((LongColumnVector) configInBatch.cols[0]).vector[i]);
                     BytesColumnVector keyColumn = (BytesColumnVector) configInBatch.cols[6];
                     String key = new String(keyColumn.vector[i], keyColumn.start[i], keyColumn.length[i]);
+                    //1.招商分成业绩key
                     if ("commission_config_partner_order_weight_detail".equals(key)) {
-                        configId = id;
+                        partnerPartConfigId = id;
+                    }
+                    //2.招商业绩key
+                    if ("commission_config_partner_detail".equals(key)) {
+                        partnerConfigId = id;
+                    }
+                    //3.渠道业绩key
+                    if ("commission_config_channel_detail".equals(key)) {
+                        channelConfigId = id;
                     }
                 }
             }
@@ -134,10 +153,17 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     String deptId = String.valueOf(((LongColumnVector) configItemInBatch.cols[8]).vector[i]);
                     BytesColumnVector valueColumn = (BytesColumnVector) configItemInBatch.cols[9];
                     String value = new String(valueColumn.vector[i], valueColumn.start[i], valueColumn.length[i]);
-                    if ("0".equals(deptId) && configId.equals(id)) {
-                        configValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
+                    if ("0".equals(deptId) && partnerPartConfigId.equals(id)) {
+                        partnerPartConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
                         }, false);
-                        break;
+                    }
+                    if ("0".equals(deptId) && partnerConfigId.equals(id)) {
+                        partnerConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
+                        }, false);
+                    }
+                    if ("0".equals(deptId) && channelConfigId.equals(id)) {
+                        channelConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
+                        }, false);
                     }
                 }
             }
@@ -166,20 +192,20 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 platform = "weixin";
                 break;
         }
-        for (PerformanceConfigVO configValue : configValues) {
+        for (PerformanceConfigVO configValue : partnerPartConfigValues) {
             if (platform.equals(configValue.getPlatform())) {
                 for (PerformanceConfigVO.ConfigVO config : configValue.getConfig()) {
-                    List<PerformanceConfigVO.ConfigVO.RuleVO> rules = config.getRules();
+                    List<RuleVO> rules = config.getRules();
                     if (CollUtil.isNotEmpty(rules)) {
                         if (1 == rules.size()) {
-                            PerformanceConfigVO.ConfigVO.RuleVO rule = rules.get(0);
+                            RuleVO rule = rules.get(0);
                             if (OperatorUtil.compare(serviceFeeRate, rule.getValue(), rule.getOperator())) {
                                 return config.getWeight();
                             }
                         }
                         if (2 == rules.size()) {
-                            PerformanceConfigVO.ConfigVO.RuleVO rule01 = rules.get(0);
-                            PerformanceConfigVO.ConfigVO.RuleVO rule02 = rules.get(1);
+                            RuleVO rule01 = rules.get(0);
+                            RuleVO rule02 = rules.get(1);
                             if (OperatorUtil.compare(serviceFeeRate, rule01.getValue(), rule01.getOperator())
                                     && OperatorUtil.compare(serviceFeeRate, rule02.getValue(), rule02.getOperator())) {
                                 return config.getWeight();
