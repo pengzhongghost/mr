@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.redu.mapreduce.test.config.BaseCommissionConfigVO;
 import com.redu.mapreduce.test.config.PerformanceConfigVO;
 import com.redu.mapreduce.test.config.RuleVO;
 import com.redu.mapreduce.util.HdfsUtil;
@@ -35,7 +36,7 @@ import java.util.List;
 public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct> {
 
     private final TypeDescription schema =
-            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint>");
+            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,level:string,coin:int,holidays:int>");
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
@@ -67,6 +68,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final Text text14 = new Text();
 
+    private final Text text15 = new Text();
+
     private final IntWritable intWritable01 = new IntWritable();
 
     private final IntWritable intWritable02 = new IntWritable();
@@ -91,9 +94,9 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private static List<PerformanceConfigVO> partnerPartConfigValues;
 
-    private static List<PerformanceConfigVO> partnerConfigValues;
+    private static BaseCommissionConfigVO partnerConfigValue;
 
-    private static List<PerformanceConfigVO> channelConfigValues;
+    private static BaseCommissionConfigVO channelConfigValue;
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
@@ -158,12 +161,22 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                         }, false);
                     }
                     if ("0".equals(deptId) && partnerConfigId.equals(id)) {
-                        partnerConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
+                        List<BaseCommissionConfigVO> partnerConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
                         }, false);
+                        for (BaseCommissionConfigVO partnerConfigValue : partnerConfigValues) {
+                            if ("estimateServiceIncome".equals(partnerConfigValue.getType())) {
+                                PerformanceReducer.partnerConfigValue = partnerConfigValue;
+                            }
+                        }
                     }
                     if ("0".equals(deptId) && channelConfigId.equals(id)) {
-                        channelConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
+                        List<BaseCommissionConfigVO> channelConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
                         }, false);
+                        for (BaseCommissionConfigVO channelConfigValue : channelConfigValues) {
+                            if ("orderNum".equals(channelConfigValue.getType())) {
+                                PerformanceReducer.channelConfigValue = channelConfigValue;
+                            }
+                        }
                     }
                 }
             }
@@ -174,13 +187,45 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
     }
 
     /**
+     * 获取总提成业绩
+     * @param numOrAmount
+     * @return
+     */
+    private BaseCommissionConfigVO.ConfigVO getCommissionWeight(BigDecimal numOrAmount, Integer roleType) {
+        BaseCommissionConfigVO commissionConfig;
+        if (1 == roleType) {
+            commissionConfig = partnerConfigValue;
+        } else {
+            commissionConfig = channelConfigValue;
+        }
+        for (BaseCommissionConfigVO.ConfigVO config : commissionConfig.getConfig()) {
+            List<RuleVO> rules = config.getRules();
+            if (1 == rules.size()) {
+                RuleVO rule = rules.get(0);
+                if (OperatorUtil.compare(numOrAmount, rule.getValue(), rule.getOperator())) {
+                    return config;
+                }
+            }
+            if (2 == rules.size()) {
+                RuleVO rule01 = rules.get(0);
+                RuleVO rule02 = rules.get(1);
+                if (OperatorUtil.compare(numOrAmount, rule01.getValue(), rule01.getOperator())
+                        && OperatorUtil.compare(numOrAmount, rule02.getValue(), rule02.getOperator())) {
+                    return config;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * 获取提成加权
      *
      * @param serviceFeeRate
      * @param platform
      * @return
      */
-    private BigDecimal getCommissionWeight(BigDecimal serviceFeeRate, String platform) {
+    private BigDecimal getPartCommissionWeight(BigDecimal serviceFeeRate, String platform) {
         switch (platform) {
             case "dy":
                 platform = "douyin";
@@ -234,7 +279,6 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         BigDecimal performanceCommission = BigDecimal.ZERO;
         for (EmployeePerformanceVO value : values) {
             try {
-                System.out.println(value.getEmployeeName() + " | " + value.getPaidTimeStr());
                 text01.set(value.getTeamName());
                 intWritable01.set(value.getTeamId());
                 text02.set(value.getBranchName());
@@ -274,9 +318,9 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     System.out.println(value);
                 }
                 BigDecimal serviceFeeRate = new BigDecimal(StrUtil.isEmpty(value.getServiceFeeRate()) ? "0" : value.getServiceFeeRate()).multiply(new BigDecimal(100));
-                BigDecimal commissionWeight = getCommissionWeight(serviceFeeRate, value.getPlatform());
-                if (null != commissionWeight) {
-                    performanceCommission = performanceCommission.add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 2, RoundingMode.FLOOR));
+                BigDecimal commissionWeight = getPartCommissionWeight(serviceFeeRate, value.getPlatform());
+                if (null != commissionWeight && 0 != BigDecimal.ZERO.compareTo(finalServiceIncome)) {
+                    performanceCommission = performanceCommission.add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 3, RoundingMode.FLOOR));
                 }
                 orcStruct.setFieldValue(17, intWritable04);
                 orcStruct.setFieldValue(18, text12);
@@ -303,6 +347,18 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         orcStruct.setFieldValue(19, text13);
         text14.set(String.valueOf(estimateServiceIncome));
         orcStruct.setFieldValue(20, text14);
+        //计算总业绩提成和等级等信息
+        BaseCommissionConfigVO.ConfigVO config = getCommissionWeight(validServiceIncome, key.getRoleType());
+        text15.set(performanceCommission.multiply(config.getCommission().divide(new BigDecimal("100"), 2, RoundingMode.FLOOR)).toString());
+        //1)业绩
+        orcStruct.setFieldValue(22, text15);
+        //2)等级
+        orcStruct.setFieldValue(23, new Text(config.getLevel()));
+        //3)热度币
+        orcStruct.setFieldValue(24, new IntWritable(10));
+        //4)带薪休假天数
+        orcStruct.setFieldValue(24, new IntWritable(10));
+
         context.write(NullWritable.get(), orcStruct);
     }
 

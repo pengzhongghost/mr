@@ -22,16 +22,25 @@ public class BaseCommissionConfigVO {
      */
     private String type;
 
-    /**
-     * 提点
-     */
-    private BigDecimal weight;
+    private List<ConfigVO> config;
 
-    /**
-     * 绩效等级
-     */
-    private String grade;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConfigVO {
 
-    private List<RuleVO> rules;
+        /**
+         * 提点
+         */
+        private BigDecimal commission;
+
+        /**
+         * 绩效等级
+         */
+        private String level;
+
+        private List<RuleVO> rules;
+
+    }
 
 }
