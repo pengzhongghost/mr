@@ -78,8 +78,8 @@ public class PerformanceDriver {
         //FileOutputFormat.setOutputPath(job, new Path("/Users/pengzhong/Downloads/performance_temp" + System.currentTimeMillis()));
         //第一次排序的
         //job.setSortComparatorClass(MapOutValueComparator.class);
-        //第二次分组排序的
-        job.setGroupingComparatorClass(MapOutValueComparator.class);
+        //FIXME 第二次分组排序的
+        //job.setGroupingComparatorClass(MapOutValueComparator.class);
         // 7 提交
         boolean result = job.waitForCompletion(true);
 

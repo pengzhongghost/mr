@@ -77,9 +77,9 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
                             if (0 == userIdCmp) {
                                 if (null != statisticsTime && null != o.getStatisticsTime()) {
                                     int statisticTimeCmp = statisticsTime.compareTo(o.getStatisticsTime());
-                                    if (0 == statisticTimeCmp) {
-                                        return (int) (this.paidTime - o.getPaidTime());
-                                    }
+//                                    if (0 == statisticTimeCmp) {
+//                                        return (int) (this.paidTime - o.getPaidTime());
+//                                    }
                                     return statisticTimeCmp;
                                 }
                             }
