@@ -36,7 +36,7 @@ import java.util.List;
 public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct> {
 
     private final TypeDescription schema =
-            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,level:string,coin:int,holidays:int>");
+            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string>");
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
@@ -160,24 +160,24 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                         partnerPartConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
                         }, false);
                     }
-                    if ("0".equals(deptId) && partnerConfigId.equals(id)) {
-                        List<BaseCommissionConfigVO> partnerConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
-                        }, false);
-                        for (BaseCommissionConfigVO partnerConfigValue : partnerConfigValues) {
-                            if ("estimateServiceIncome".equals(partnerConfigValue.getType())) {
-                                PerformanceReducer.partnerConfigValue = partnerConfigValue;
-                            }
-                        }
-                    }
-                    if ("0".equals(deptId) && channelConfigId.equals(id)) {
-                        List<BaseCommissionConfigVO> channelConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
-                        }, false);
-                        for (BaseCommissionConfigVO channelConfigValue : channelConfigValues) {
-                            if ("orderNum".equals(channelConfigValue.getType())) {
-                                PerformanceReducer.channelConfigValue = channelConfigValue;
-                            }
-                        }
-                    }
+//                    if ("0".equals(deptId) && partnerConfigId.equals(id)) {
+//                        List<BaseCommissionConfigVO> partnerConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
+//                        }, false);
+//                        for (BaseCommissionConfigVO partnerConfigValue : partnerConfigValues) {
+//                            if ("estimateServiceIncome".equals(partnerConfigValue.getType())) {
+//                                PerformanceReducer.partnerConfigValue = partnerConfigValue;
+//                            }
+//                        }
+//                    }
+//                    if ("0".equals(deptId) && channelConfigId.equals(id)) {
+//                        List<BaseCommissionConfigVO> channelConfigValues = JSONUtil.toBean(value, new TypeReference<List<BaseCommissionConfigVO>>() {
+//                        }, false);
+//                        for (BaseCommissionConfigVO channelConfigValue : channelConfigValues) {
+//                            if ("orderNum".equals(channelConfigValue.getType())) {
+//                                PerformanceReducer.channelConfigValue = channelConfigValue;
+//                            }
+//                        }
+//                    }
                 }
             }
             rows.close();
@@ -347,18 +347,9 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         orcStruct.setFieldValue(19, text13);
         text14.set(String.valueOf(estimateServiceIncome));
         orcStruct.setFieldValue(20, text14);
-        //计算总业绩提成和等级等信息
-        BaseCommissionConfigVO.ConfigVO config = getCommissionWeight(validServiceIncome, key.getRoleType());
-        text15.set(performanceCommission.multiply(config.getCommission().divide(new BigDecimal("100"), 2, RoundingMode.FLOOR)).toString());
-        //1)业绩
+        //计算业绩提成
+        text15.set(performanceCommission.toString());
         orcStruct.setFieldValue(22, text15);
-        //2)等级
-        orcStruct.setFieldValue(23, new Text(config.getLevel()));
-        //3)热度币
-        orcStruct.setFieldValue(24, new IntWritable(10));
-        //4)带薪休假天数
-        orcStruct.setFieldValue(24, new IntWritable(10));
-
         context.write(NullWritable.get(), orcStruct);
     }
 
