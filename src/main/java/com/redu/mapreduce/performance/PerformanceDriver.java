@@ -23,7 +23,9 @@ public class PerformanceDriver {
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
-        configuration.set("paid_month", "2023-06");
+        String sourceTable = args[0];
+        String targetTable = args[1];
+        configuration.set("paid_month", args[2]);
         Job job = Job.getInstance(configuration);
 
         // 2 设置jar加载路径
@@ -51,9 +53,9 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config_item/ds=" + ds + "/*"));
 
         // 6 设置输入和输出路径
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230808/*"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/" + sourceTable + "/ds=20230808/*"));
 
-        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/" + System.currentTimeMillis()));
+        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/" + targetTable));
         // 7 提交
         boolean result = job.waitForCompletion(true);
 
