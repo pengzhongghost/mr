@@ -1,6 +1,7 @@
 package com.redu.mapreduce.test;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -36,7 +37,7 @@ import java.util.List;
 public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct> {
 
     private final TypeDescription schema =
-            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string>");
+            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string>");
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
@@ -97,6 +98,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
     private static BaseCommissionConfigVO partnerConfigValue;
 
     private static BaseCommissionConfigVO channelConfigValue;
+
+    private static final Text DS = new Text(DateUtil.today());
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
@@ -350,6 +353,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         //计算业绩提成
         text15.set(performanceCommission.toString());
         orcStruct.setFieldValue(22, text15);
+        orcStruct.setFieldValue(23, DS);
         context.write(NullWritable.get(), orcStruct);
     }
 
