@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
-    <file url="PROJECT" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/DeptVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/DimensionVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/EmployeePerformanceVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/EmployeeVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/OrderExtVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/PerformanceDriver.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/PerformanceMapper.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/PerformanceReducer.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/config/BaseCommissionConfigVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/config/PerformanceConfigVO.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/redu/mapreduce/performance/config/RuleVO.java" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>
