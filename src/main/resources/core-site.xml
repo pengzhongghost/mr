@@ -19,10 +19,10 @@
 <configuration>
   <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://localhost:9000</value>
+    <value>hdfs://hadoop001:9000</value>
   </property>
-  <property>
-    <name>hadoop.tmp.dir</name>
-    <value>/usr/local/Cellar/hadoop/2.7.2/libexec/tmp</value>
-  </property>
+<!--  <property>-->
+<!--    <name>hadoop.tmp.dir</name>-->
+<!--    <value>/usr/local/Cellar/hadoop/2.7.2/libexec/tmp</value>-->
+<!--  </property>-->
 </configuration>
