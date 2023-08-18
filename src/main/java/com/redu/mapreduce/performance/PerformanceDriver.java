@@ -1,6 +1,7 @@
 package com.redu.mapreduce.performance;
 
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -23,7 +24,7 @@ public class PerformanceDriver {
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
-        configuration.set("paid_month", args[0]);
+        configuration.set("paid_month", LocalDate.now().minusMonths(2).format(DatePattern.NORM_MONTH_FORMATTER));
         Job job = Job.getInstance(configuration);
 
         // 2 设置jar加载路径
@@ -51,7 +52,7 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config_item/ds=" + ds + "/*"));
 
         // 6 设置输入和输出路径
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds + "/*"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230808"));
 
         FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/ds=" + ds));
         // 7 提交
