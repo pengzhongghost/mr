@@ -53,7 +53,7 @@ public class PerformanceDriver {
         // 6 设置输入和输出路径
         TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds + "/*"));
 
-        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp"));
+        FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/ds=" + ds));
         // 7 提交
         boolean result = job.waitForCompletion(true);
 
