@@ -99,7 +99,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                         String type = new String(typeColumn.vector[i], typeColumn.start[i], typeColumn.length[i]);
                         BytesColumnVector fromTableColum = (BytesColumnVector) userDeptOriginBatch.cols[5];
                         String fromTable = new String(fromTableColum.vector[i], fromTableColum.start[i], fromTableColum.length[i]);
-                        userDeptOriginMap.put(type + "|" + fromTable + "|" + fid, reduId);
+                        userDeptOriginMap.put(fromTable + "|" + fid, reduId);
                         if ("DEPT".equals(type) && "GROUP".equals(fromTable)) {
                             groupIdMap.put(reduId, type + "|" + fromTable + "|" + fid);
                         }
@@ -182,7 +182,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String estimateServiceIncome = split[27];
                 //String channelId = split[50];
                 OrderExtVO orderExt = JSONUtil.toBean(split[62], OrderExtVO.class);
-                String partnerId = userDeptOriginMap.get("USER|PARTNER|" + orderExt.getHiPartnerid());
+                String partnerId = userDeptOriginMap.get("PARTNER|" + orderExt.getHiPartnerid());
                 //String partnerName = split[135];
                 String paidTime = split[5];
                 if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
