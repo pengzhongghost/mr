@@ -21,4 +21,8 @@ public class OrderExtVO {
 
     private String channelGroupId;
 
+    private String partnerFinalServiceIncome;
+
+    private String channelFinalServiceIncome;
+
 }

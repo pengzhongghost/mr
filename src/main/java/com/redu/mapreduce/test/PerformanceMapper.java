@@ -177,7 +177,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     || "4".equals(platformCode)) {
                 String orderStatus = split[2];
                 String estimateSettlementAmount = split[24];
-                String finalServiceIncome = split[56];
                 String achievementsArderMultiple = split[37];
                 String serviceFeeRate = split[26];
                 String estimateServiceIncome = split[27];
@@ -216,7 +215,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     outV.setFundOrderGmv(estimateSettlementAmount);
                 } else {
                     outV.setValidOrderNum(1);
-                    outV.setValidServiceIncome(finalServiceIncome);
+                    outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
                     outV.setOrderAchievementSum(achievementsArderMultiple);
                 }
                 outV.setGmv(estimateSettlementAmount);
