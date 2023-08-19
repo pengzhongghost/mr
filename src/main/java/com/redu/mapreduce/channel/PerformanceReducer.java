@@ -115,7 +115,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     String id = String.valueOf(((LongColumnVector) configInBatch.cols[0]).vector[i]);
                     BytesColumnVector keyColumn = (BytesColumnVector) configInBatch.cols[6];
                     String key = new String(keyColumn.vector[i], keyColumn.start[i], keyColumn.length[i]);
-                    //1.招商分成业绩key
+                    //1.渠道分成业绩key
                     if ("commission_config_channel_order_weight_detail".equals(key)) {
                         channelPartConfigId = id;
                     }

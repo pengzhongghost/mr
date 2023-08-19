@@ -189,7 +189,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String estimateServiceIncome = split[27];
                 //String channelId = split[50];
                 OrderExtVO orderExt = JSONUtil.toBean(split[62], OrderExtVO.class);
-                String channelId = userDeptOriginMap.get("USER|CHANNEL|" + orderExt.getHiChannelId());
+                String channelId = userDeptOriginMap.get("USER|CHANNEL|" + orderExt.getHiChannelid());
                 //String partnerName = split[135];
                 String paidTime = split[5];
                 if (StrUtil.isEmpty(channelId) || "0".equals(channelId)) {
