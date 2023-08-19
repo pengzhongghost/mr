@@ -30,7 +30,7 @@ public class PerformanceDriver {
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
-        configuration.set("paid_month", LocalDate.now().minusMonths(2).format(DatePattern.NORM_MONTH_FORMATTER));
+        configuration.set("paid_month", LocalDate.now().minusMonths(1).format(DatePattern.NORM_MONTH_FORMATTER));
 
         OrcConf.MAPRED_OUTPUT_SCHEMA.setString(configuration,"struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string>");
 
@@ -69,12 +69,12 @@ public class PerformanceDriver {
 
         // 6 设置输入和输出路径
         //TextInputFormat.setInputPaths(job, new Path("/Users/pengzhong/Downloads/redu_order_tmp__a7368047_80e3_461d_9465_dc3a7dddc71d"));
-        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230808/*"));
+        TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds +"/*"));
         //TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds + "/*"));
         //job.setInputFormatClass(OrcInputFormat.class);
         //FileOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/performance" + System.currentTimeMillis()));
         job.setOutputFormatClass(OrcOutputFormat.class);
-        OrcOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/" + System.currentTimeMillis()));
+        OrcOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/performance_temp/channel/ds=" + ds));
         //FileOutputFormat.setOutputPath(job, new Path("/Users/pengzhong/Downloads/performance_temp" + System.currentTimeMillis()));
         //第一次排序的
         //job.setSortComparatorClass(MapOutValueComparator.class);
