@@ -72,7 +72,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     BytesColumnVector employeeNo = (BytesColumnVector) userInBatch.cols[8];
                     BytesColumnVector hiredDate = (BytesColumnVector) userInBatch.cols[22];
                     for (int i = 0; i < userInBatch.size; i++) {
-                        boolean isFormal = false;
+                        boolean isFormal = true;
                         String hiredDateStr = new String(hiredDate.vector[i], hiredDate.start[i], hiredDate.length[i]);
                         if (StrUtil.isNotEmpty(hiredDateStr)) {
                             LocalDateTime formalMonth = DateUtil.parseLocalDateTime(DateUtil.format(DateUtil.parseLocalDateTime(hiredDateStr, DatePattern.NORM_DATETIME_PATTERN), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN).plusMonths(2);
