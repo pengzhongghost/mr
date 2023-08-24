@@ -71,6 +71,10 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final Text text15 = new Text();
 
+    private final Text text16 = new Text();
+
+    private final Text text17 = new Text();
+
     private final IntWritable intWritable01 = new IntWritable();
 
     private final IntWritable intWritable02 = new IntWritable();
@@ -296,6 +300,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 intWritable04.set(value.getRoleType());
                 text12.set(value.getEmployeeNo());
                 loneWritable04.set(value.getUserId());
+                text16.set(value.getHiredDate());
+                text17.set(value.getIsFormal());
 
                 orcStruct.setFieldValue(0, text01);
                 orcStruct.setFieldValue(1, intWritable01);
@@ -328,6 +334,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 orcStruct.setFieldValue(17, intWritable04);
                 orcStruct.setFieldValue(18, text12);
                 orcStruct.setFieldValue(21, loneWritable04);
+                orcStruct.setFieldValue(24, text16);
+                orcStruct.setFieldValue(25, text17);
             } catch (Exception e) {
                 log.error("PerformanceReducer reduce", e);
                 log.error("PerformanceReducer reduce value:{}", JSONUtil.toJsonStr(value));

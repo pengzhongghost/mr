@@ -22,6 +22,7 @@ import org.apache.orc.RecordReader;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -75,11 +76,21 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     LongColumnVector userId = (LongColumnVector) userInBatch.cols[0];
                     BytesColumnVector name = (BytesColumnVector) userInBatch.cols[2];
                     BytesColumnVector employeeNo = (BytesColumnVector) userInBatch.cols[8];
+                    BytesColumnVector hiredDate = (BytesColumnVector) userInBatch.cols[22];
                     for (int i = 0; i < userInBatch.size; i++) {
+                        boolean isFormal = false;
+                        String hiredDateStr = new String(hiredDate.vector[i], hiredDate.start[i], hiredDate.length[i]);
+                        if (StrUtil.isNotEmpty(hiredDateStr)) {
+                            LocalDateTime formalMonth = DateUtil.parseLocalDateTime(DateUtil.format(DateUtil.parseLocalDateTime(hiredDateStr, DatePattern.NORM_DATETIME_PATTERN), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN).plusMonths(2);
+                            LocalDateTime nowMonth = DateUtil.parseLocalDateTime(DateUtil.format(LocalDateTime.now(), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN);
+                            isFormal = nowMonth.isBefore(formalMonth) || nowMonth.isEqual(formalMonth);
+                        }
                         // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
                         EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
                                 .employeeNo(new String(employeeNo.vector[i], employeeNo.start[i], employeeNo.length[i]))
-                                .name(new String(name.vector[i], name.start[i], name.length[i])).build();
+                                .name(new String(name.vector[i], name.start[i], name.length[i]))
+                                .hiredDate(hiredDateStr)
+                                .isFormal(isFormal).build();
                         userMap.put(employee.getUserId(), employee);
                     }
                 }
@@ -241,6 +252,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     outV.setEmployeeNo(employee.getEmployeeNo());
                     outV.setEmployeeName(employee.getName());
                     outK.setEmployeeNo(employee.getEmployeeNo());
+                    outV.setHiredDate(employee.getHiredDate());
+                    outV.setIsFormal(String.valueOf(employee.isFormal()));
                 } else {
                     outK.setEmployeeNo("0");
                 }

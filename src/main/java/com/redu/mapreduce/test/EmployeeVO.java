@@ -30,4 +30,14 @@ public class EmployeeVO {
      */
     private String employeeNo;
 
+    /**
+     * 入职时间
+     */
+    private String hiredDate;
+
+    /**
+     * 是否正式员工
+     */
+    private boolean isFormal;
+
 }

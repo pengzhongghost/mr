@@ -70,6 +70,16 @@ public class EmployeePerformanceVO implements Writable {
 
     private String serviceFeeRate;
 
+    /**
+     * 入职时间
+     */
+    private String hiredDate;
+
+    /**
+     * 是否正式员工
+     */
+    private String isFormal;
+
     @Override
     public void write(DataOutput dataOutput) throws IOException {
         dataOutput.writeUTF(null == teamName ? "" : teamName);
@@ -96,6 +106,8 @@ public class EmployeePerformanceVO implements Writable {
         dataOutput.writeLong(userId);
         dataOutput.writeUTF(paidTimeStr);
         dataOutput.writeUTF(serviceFeeRate);
+        dataOutput.writeUTF(hiredDate);
+        dataOutput.writeUTF(isFormal);
     }
 
     @Override
@@ -124,6 +136,8 @@ public class EmployeePerformanceVO implements Writable {
         this.userId = dataInput.readLong();
         this.paidTimeStr = dataInput.readUTF();
         this.serviceFeeRate = dataInput.readUTF();
+        this.hiredDate = dataInput.readUTF();
+        this.isFormal = dataInput.readUTF();
     }
 
     @Override
