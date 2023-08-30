@@ -76,8 +76,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                         String hiredDateStr = new String(hiredDate.vector[i], hiredDate.start[i], hiredDate.length[i]);
                         if (StrUtil.isNotEmpty(hiredDateStr)) {
                             LocalDateTime formalMonth = DateUtil.parseLocalDateTime(DateUtil.format(DateUtil.parseLocalDateTime(hiredDateStr, DatePattern.NORM_DATETIME_PATTERN), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN).plusMonths(2);
-                            LocalDateTime nowMonth = DateUtil.parseLocalDateTime(DateUtil.format(LocalDateTime.now(), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN);
-                            isFormal = nowMonth.isAfter(formalMonth);
+                            LocalDateTime lastMonth = DateUtil.parseLocalDateTime(DateUtil.format(LocalDateTime.now().minusMonths(1), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN);
+                            isFormal = lastMonth.isAfter(formalMonth);
                         }
                         // 注意：因为是列存储，所以name列是一个大buffer存储的，需要从里面的start偏移量取length长度的才是该行的列值
                         EmployeeVO employee = EmployeeVO.builder().userId(String.valueOf(userId.vector[i]))
