@@ -5,21 +5,15 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.redu.mapreduce.per.config.BaseCommissionConfigVO;
 import com.redu.mapreduce.per.config.PerformanceConfigVO;
 import com.redu.mapreduce.per.config.RuleVO;
-import com.redu.mapreduce.util.HdfsUtil;
+import com.redu.mapreduce.per.vo.ConfigItemVO;
+import com.redu.mapreduce.per.vo.ConfigVO;
+import com.redu.mapreduce.util.MapJoinUtil;
 import com.redu.mapreduce.util.OperatorUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.orc.OrcFile;
-import org.apache.orc.Reader;
-import org.apache.orc.RecordReader;
 import org.apache.orc.TypeDescription;
 import org.apache.orc.mapred.OrcStruct;
 
@@ -28,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author pengzhong
@@ -91,87 +86,40 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final LongWritable loneWritable04 = new LongWritable();
 
-    private String partnerPartConfigId;
-
-    private String partnerConfigId;
-
-    private String channelConfigId;
+    private Integer partnerPartConfigId;
 
     private static List<PerformanceConfigVO> partnerPartConfigValues;
-
-    private static BaseCommissionConfigVO partnerConfigValue;
-
-    private static BaseCommissionConfigVO channelConfigValue;
 
     private static final Text DS = new Text(DateUtil.today());
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
-        //1.获取redu_user表中的相关信息
-        // 获取缓存的文件，并把文件内容封装到集合
-        URI[] cacheFiles = context.getCacheFiles();
-        URI uri01 = cacheFiles[3];
-        String dirName01 = uri01.toString().split("/\\*")[0];
-        List<Path> paths = HdfsUtil.ls(dirName01);
-        for (Path path : paths) {
-            Reader configReader = OrcFile.createReader(path, OrcFile.readerOptions(context.getConfiguration()));
-            // 解析schema
-            VectorizedRowBatch configInBatch = configReader.getSchema().createRowBatch();
-            // 流解析文件
-            //1)user表
-            RecordReader rows = configReader.rows();
-            while (rows.nextBatch(configInBatch)) {   // 读1个batch
-                for (int i = 0; i < configInBatch.size; i++) {
-                    // 列式读取
-                    String id = String.valueOf(((LongColumnVector) configInBatch.cols[0]).vector[i]);
-                    BytesColumnVector keyColumn = (BytesColumnVector) configInBatch.cols[6];
-                    String key = new String(keyColumn.vector[i], keyColumn.start[i], keyColumn.length[i]);
-                    //1.招商分成业绩key
-                    if ("commission_config_partner_order_weight_detail".equals(key)) {
-                        partnerPartConfigId = id;
-                    }
-                    //2.招商业绩key
-                    if ("commission_config_partner_detail".equals(key)) {
-                        partnerConfigId = id;
-                    }
-                    //3.渠道业绩key
-                    if ("commission_config_channel_detail".equals(key)) {
-                        channelConfigId = id;
-                    }
+        try {
+            //1.获取redu_user表中的相关信息
+            // 获取缓存的文件，并把文件内容封装到集合
+            URI[] cacheFiles = context.getCacheFiles();
+            URI uri01 = cacheFiles[3];
+            String dirName01 = uri01.toString().split("/\\*")[0];
+            List<ConfigVO> configs = MapJoinUtil.read(dirName01, context.getConfiguration(), ConfigVO.class);
+            for (ConfigVO config : configs) {
+                //1.招商分成业绩key
+                if ("commission_config_partner_order_weight_detail".equals(config.getKey())) {
+                    partnerPartConfigId = config.getId();
                 }
             }
-            rows.close();
-            // 关流
-            IOUtils.closeStream(configReader);
-        }
-        //2.获取redu_user表中的相关信息
-        // 获取缓存的文件，并把文件内容封装到集合
-        URI uri02 = cacheFiles[4];
-        String dirName02 = uri02.toString().split("/\\*")[0];
-        List<Path> paths02 = HdfsUtil.ls(dirName02);
-        for (Path path : paths02) {
-            Reader configItemReader = OrcFile.createReader(path, OrcFile.readerOptions(context.getConfiguration()));
-            // 解析schema
-            VectorizedRowBatch configItemInBatch = configItemReader.getSchema().createRowBatch();
-            // 流解析文件
-            //1)user表
-            RecordReader rows = configItemReader.rows();
-            while (rows.nextBatch(configItemInBatch)) {   // 读1个batch
-                for (int i = 0; i < configItemInBatch.size; i++) {
-                    // 列式读取
-                    String id = String.valueOf(((LongColumnVector) configItemInBatch.cols[6]).vector[i]);
-                    String deptId = String.valueOf(((LongColumnVector) configItemInBatch.cols[8]).vector[i]);
-                    BytesColumnVector valueColumn = (BytesColumnVector) configItemInBatch.cols[9];
-                    String value = new String(valueColumn.vector[i], valueColumn.start[i], valueColumn.length[i]);
-                    if ("0".equals(deptId) && partnerPartConfigId.equals(id)) {
-                        partnerPartConfigValues = JSONUtil.toBean(value, new TypeReference<List<PerformanceConfigVO>>() {
-                        }, false);
-                    }
+            //2.获取redu_user表中的相关信息
+            // 获取缓存的文件，并把文件内容封装到集合
+            URI uri02 = cacheFiles[4];
+            String dirName02 = uri02.toString().split("/\\*")[0];
+            List<ConfigItemVO> configItems = MapJoinUtil.read(dirName02, context.getConfiguration(), ConfigItemVO.class);
+            for (ConfigItemVO configItem : configItems) {
+                if (0 == configItem.getDeptId() && Objects.equals(partnerPartConfigId, configItem.getConfigId())) {
+                    partnerPartConfigValues = JSONUtil.toBean(configItem.getValue(), new TypeReference<List<PerformanceConfigVO>>() {
+                    }, false);
                 }
             }
-            rows.close();
-            // 关流
-            IOUtils.closeStream(configItemReader);
+        } catch (Exception e) {
+            System.out.println("PerformanceReducer setUp: " + e.getMessage());
         }
     }
 
