@@ -18,6 +18,7 @@ import org.apache.orc.TypeDescription;
 import org.apache.orc.mapred.OrcStruct;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -36,67 +37,18 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
-    private final Text text01 = new Text();
-
-    private final Text text02 = new Text();
-
-    private final Text text03 = new Text();
-
-    private final Text text04 = new Text();
-
-    private final Text text05 = new Text();
-
-    private final Text text06 = new Text();
-
-    private final Text text07 = new Text();
-
-    private final Text text08 = new Text();
-
-    private final Text text09 = new Text();
-
-    private final Text text10 = new Text();
-
-    private final Text text11 = new Text();
-
-    private final Text text12 = new Text();
-
-    private final Text text13 = new Text();
-
-    private final Text text14 = new Text();
-
-    private final Text text15 = new Text();
-
-    private final Text text16 = new Text();
-
-    private final Text text17 = new Text();
-
-    private final IntWritable intWritable01 = new IntWritable();
-
-    private final IntWritable intWritable02 = new IntWritable();
-
-    private final IntWritable intWritable03 = new IntWritable();
-
-    private final IntWritable intWritable04 = new IntWritable();
-
-    private final LongWritable loneWritable01 = new LongWritable();
-
-    private final LongWritable loneWritable02 = new LongWritable();
-
-    private final LongWritable loneWritable03 = new LongWritable();
-
-    private final LongWritable loneWritable04 = new LongWritable();
+    private final EmployeePerformanceResultVO performanceResult = new EmployeePerformanceResultVO();
 
     private Integer partnerPartConfigId;
 
     private static List<PerformanceConfigVO> partnerPartConfigValues;
 
-    private static final Text DS = new Text(DateUtil.today());
+    private static final String DS = DateUtil.today();
 
     @Override
     protected void setup(Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct>.Context context) throws IOException, InterruptedException {
         try {
-            //1.获取redu_user表中的相关信息
-            // 获取缓存的文件，并把文件内容封装到集合
+            //1.获取config表中的相关信息
             URI[] cacheFiles = context.getCacheFiles();
             URI uri01 = cacheFiles[3];
             String dirName01 = uri01.toString().split("/\\*")[0];
@@ -107,8 +59,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                     partnerPartConfigId = config.getId();
                 }
             }
-            //2.获取redu_user表中的相关信息
-            // 获取缓存的文件，并把文件内容封装到集合
+            //2.获取config_item表中的相关信息
             URI uri02 = cacheFiles[4];
             String dirName02 = uri02.toString().split("/\\*")[0];
             List<ConfigItemVO> configItems = MapJoinUtil.read(dirName02, context.getConfiguration(), ConfigItemVO.class);
@@ -173,93 +124,65 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         if (0 == key.getUserId()) {
             return;
         }
-        long orderCount = 0;
-        long fundOrderCount = 0;
-        long validOrderNum = 0;
-        BigDecimal gmv = BigDecimal.ZERO;
-        BigDecimal fundOrderGmv = BigDecimal.ZERO;
-        BigDecimal validServiceIncome = BigDecimal.ZERO;
-        BigDecimal orderAchievementSum = BigDecimal.ZERO;
-        BigDecimal estimateServiceIncome = BigDecimal.ZERO;
-        BigDecimal performanceCommission = BigDecimal.ZERO;
         for (EmployeePerformanceVO value : values) {
             try {
-                text01.set(value.getTeamName());
-                intWritable01.set(value.getTeamId());
-                text02.set(value.getBranchName());
-                intWritable02.set(value.getBranchId());
-                text03.set(value.getGroupName());
-                intWritable03.set(value.getGroupId());
-                text04.set(value.getDeptIdPath());
-                text05.set(value.getDeptNamePath());
-                text06.set(value.getEmployeeName());
-                text07.set(value.getStatisticsTime());
-                text08.set(value.getPlatform());
-                intWritable04.set(value.getRoleType());
-                text12.set(value.getEmployeeNo());
-                loneWritable04.set(value.getUserId());
-                text16.set(value.getHiredDate());
-                text17.set(value.getIsFormal());
-
-                orcStruct.setFieldValue(0, text01);
-                orcStruct.setFieldValue(1, intWritable01);
-                orcStruct.setFieldValue(2, text02);
-                orcStruct.setFieldValue(3, intWritable02);
-                orcStruct.setFieldValue(4, text03);
-                orcStruct.setFieldValue(5, intWritable03);
-                orcStruct.setFieldValue(6, text04);
-                orcStruct.setFieldValue(7, text05);
-                orcStruct.setFieldValue(8, text06);
-                orcStruct.setFieldValue(9, text07);
-                orcStruct.setFieldValue(10, text08);
-                orderCount += value.getOrderCount();
-                fundOrderCount += value.getFundOrderCount();
-                validOrderNum += value.getValidOrderNum();
-                gmv = gmv.add(new BigDecimal(StrUtil.isEmpty(value.getGmv()) ? "0" : value.getGmv()));
-                fundOrderGmv = fundOrderGmv.add(new BigDecimal(StrUtil.isEmpty(value.getFundOrderGmv()) ? "0" : value.getFundOrderGmv()));
+                performanceResult.setTeamName(value.getTeamName());
+                performanceResult.setTeamId(value.getTeamId());
+                performanceResult.setBranchName(value.getBranchName());
+                performanceResult.setBranchId(value.getBranchId());
+                performanceResult.setGroupName(value.getGroupName());
+                performanceResult.setGroupId(value.getGroupId());
+                performanceResult.setDeptIdPath(value.getDeptIdPath());
+                performanceResult.setDeptNamePath(value.getDeptNamePath());
+                performanceResult.setEmployeeName(value.getEmployeeName());
+                performanceResult.setStatisticsTime(value.getStatisticsTime());
+                performanceResult.setPlatform(value.getPlatform());
+                performanceResult.setRoleType(value.getRoleType());
+                performanceResult.setEmployeeNo(value.getEmployeeNo());
+                performanceResult.setUserId(value.getUserId());
+                performanceResult.setHiredDate(value.getHiredDate());
+                performanceResult.setIsFormal(value.getIsFormal());
+                performanceResult.setOrderCount(performanceResult.getOrderCount() + value.getOrderCount());
+                performanceResult.setFundOrderCount(performanceResult.getFundOrderCount() + value.getFundOrderCount());
+                performanceResult.setValidOrderNum(performanceResult.getValidOrderNum() + value.getValidOrderNum());
+                performanceResult.setGmv(performanceResult.getGmv().add(new BigDecimal(StrUtil.isEmpty(value.getGmv()) ? "0" : value.getGmv())));
                 BigDecimal finalServiceIncome = new BigDecimal(StrUtil.isEmpty(value.getValidServiceIncome()) ? "0" : value.getValidServiceIncome());
-                validServiceIncome = validServiceIncome.add(finalServiceIncome);
-                orderAchievementSum = orderAchievementSum.add(new BigDecimal(StrUtil.isEmpty(value.getOrderAchievementSum()) ? "0" : value.getOrderAchievementSum()));
-                estimateServiceIncome = estimateServiceIncome.add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome()));
-                if (!"0.0".equals(value.getServiceFeeRate())) {
-                    System.out.println(value);
-                }
+                performanceResult.setValidServiceIncome(performanceResult.getValidServiceIncome().add(finalServiceIncome));
+                performanceResult.setOrderAchievementSum(performanceResult.getOrderAchievementSum().add(new BigDecimal(StrUtil.isEmpty(value.getOrderAchievementSum()) ? "0" : value.getOrderAchievementSum())));
+                performanceResult.setEstimateServiceIncome(performanceResult.getOrderAchievementSum().add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome())));
                 BigDecimal serviceFeeRate = new BigDecimal(StrUtil.isEmpty(value.getServiceFeeRate()) ? "0" : value.getServiceFeeRate()).multiply(new BigDecimal(100));
                 BigDecimal commissionWeight = getPartCommissionWeight(serviceFeeRate, value.getPlatform());
                 if (null != commissionWeight && 0 != BigDecimal.ZERO.compareTo(finalServiceIncome)) {
-                    performanceCommission = performanceCommission.add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 3, RoundingMode.FLOOR));
+                    performanceResult.setPerformanceCommission(performanceResult.getPerformanceCommission().add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 3, RoundingMode.FLOOR)));
                 }
-                orcStruct.setFieldValue(17, intWritable04);
-                orcStruct.setFieldValue(18, text12);
-                orcStruct.setFieldValue(21, loneWritable04);
-                orcStruct.setFieldValue(24, text16);
-                orcStruct.setFieldValue(25, text17);
             } catch (Exception e) {
                 log.error("PerformanceReducer reduce", e);
                 log.error("PerformanceReducer reduce value:{}", JSONUtil.toJsonStr(value));
                 log.error("PerformanceReducer reduce employeePerformance:{}", JSONUtil.toJsonStr(value));
             }
         }
-        loneWritable01.set(orderCount);
-        orcStruct.setFieldValue(11, loneWritable01);
-        loneWritable02.set(fundOrderCount);
-        orcStruct.setFieldValue(12, loneWritable02);
-        loneWritable03.set(validOrderNum);
-        orcStruct.setFieldValue(13, loneWritable03);
-        text09.set(String.valueOf(gmv));
-        orcStruct.setFieldValue(14, text09);
-        text10.set(String.valueOf(fundOrderGmv));
-        orcStruct.setFieldValue(15, text10);
-        text11.set(String.valueOf(validServiceIncome));
-        orcStruct.setFieldValue(16, text11);
-        text13.set(String.valueOf(orderAchievementSum));
-        orcStruct.setFieldValue(19, text13);
-        text14.set(String.valueOf(estimateServiceIncome));
-        orcStruct.setFieldValue(20, text14);
-        //计算业绩提成
-        text15.set(performanceCommission.toString());
-        orcStruct.setFieldValue(22, text15);
-        orcStruct.setFieldValue(23, DS);
+        performanceResult.setDs(DS);
+        Field[] fields = EmployeePerformanceResultVO.class.getDeclaredFields();
+        for (int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
+            field.setAccessible(true);
+            Object fieldValue = null;
+            try {
+                fieldValue = field.get(performanceResult);
+            } catch (IllegalAccessException e) {
+                System.out.println("reducer error: " + e.getMessage());
+            }
+            if (fieldValue instanceof Integer) {
+                orcStruct.setFieldValue(i, new IntWritable((Integer) fieldValue));
+            } else if (fieldValue instanceof Long) {
+                orcStruct.setFieldValue(i, new LongWritable((Long) fieldValue));
+            } else if (fieldValue instanceof String) {
+                orcStruct.setFieldValue(i, new Text((String) fieldValue));
+            } else if (fieldValue instanceof BigDecimal) {
+                BigDecimal value = (BigDecimal) fieldValue;
+                orcStruct.setFieldValue(i, new Text(String.valueOf(value)));
+            }
+        }
         context.write(NullWritable.get(), orcStruct);
     }
 
