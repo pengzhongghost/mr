@@ -50,7 +50,7 @@ public class ReduOrderVO {
     private Double techServiceFee;
     private Double techServiceFeeRate;
     private Double settledTechServiceFee;
-    private Byte systemMultiple;
+    private Integer systemMultiple;
     private Double weightMultiple;
     private Double achievementsOrderMultiple;
     private Byte isGenOrderMultiple;

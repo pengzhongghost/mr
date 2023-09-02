@@ -97,7 +97,11 @@ public class EmployeePerformanceVO implements Writable {
                 e.printStackTrace();
             }
             if (String.class.equals(field.getType())) {
-                dataOutput.writeUTF(String.valueOf(value));
+                if (null == value) {
+                    dataOutput.writeUTF("");
+                } else {
+                    dataOutput.writeUTF(String.valueOf(value));
+                }
             }
             if (int.class.equals(field.getType())) {
                 dataOutput.writeInt((Integer) value);

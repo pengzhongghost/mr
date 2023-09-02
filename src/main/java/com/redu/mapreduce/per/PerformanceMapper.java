@@ -22,10 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -140,7 +137,23 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             Field[] fields = ReduOrderVO.class.getDeclaredFields();
             for (int i = 0; i < fields.length; i++) {
                 Field field = fields[i];
-                field.set(reduOrder, split[i]);
+                field.setAccessible(true);
+                if (StrUtil.isEmpty(split[i])) {
+                    continue;
+                }
+                if (field.getType().equals(Long.class)) {
+                    field.set(reduOrder, Long.parseLong(split[i]));
+                } else if (field.getType().equals(Byte.class)) {
+                    field.set(reduOrder, Byte.parseByte(split[i]));
+                } else if (field.getType().equals(Date.class)) {
+                    field.set(reduOrder, DateUtil.parse(split[i], DatePattern.NORM_DATETIME_FORMAT));
+                } else if (field.getType().equals(Integer.class)) {
+                    field.set(reduOrder, Integer.parseInt(split[i]));
+                } else if (field.getType().equals(Double.class)) {
+                    field.set(reduOrder, Double.parseDouble(split[i]));
+                } else {
+                    field.set(reduOrder, split[i]);
+                }
             }
             Byte platformType = reduOrder.getPlatformType();
             List<String> appletList = Arrays.asList(reduOrder.getAppletPeg().split(","));
@@ -182,7 +195,9 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 } else {
                     outV.setValidOrderNum(1);
                     outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
-                    outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
+                    if (null != reduOrder.getAchievementsOrderMultiple()) {
+                        outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
+                    }
                 }
                 outV.setGmv(String.valueOf(estimateSettlementAmount));
                 outV.setEstimateServiceIncome(String.valueOf(reduOrder.getEstimateServiceIncome()));
