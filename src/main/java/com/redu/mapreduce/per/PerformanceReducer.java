@@ -148,7 +148,8 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 BigDecimal finalServiceIncome = new BigDecimal(StrUtil.isEmpty(value.getValidServiceIncome()) ? "0" : value.getValidServiceIncome());
                 performanceResult.setValidServiceIncome(performanceResult.getValidServiceIncome().add(finalServiceIncome));
                 performanceResult.setOrderAchievementSum(performanceResult.getOrderAchievementSum().add(new BigDecimal(StrUtil.isEmpty(value.getOrderAchievementSum()) ? "0" : value.getOrderAchievementSum())));
-                performanceResult.setEstimateServiceIncome(performanceResult.getOrderAchievementSum().add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome())));
+                performanceResult.setEstimateServiceIncome(performanceResult.getEstimateServiceIncome().add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome())));
+                performanceResult.setFundOrderGmv(performanceResult.getFundOrderGmv().add(new BigDecimal(StrUtil.isEmpty(value.getFundOrderGmv()) ? "0" : value.getFundOrderGmv())));
                 BigDecimal serviceFeeRate = new BigDecimal(StrUtil.isEmpty(value.getServiceFeeRate()) ? "0" : value.getServiceFeeRate()).multiply(new BigDecimal(100));
                 BigDecimal commissionWeight = getPartCommissionWeight(serviceFeeRate, value.getPlatform());
                 if (null != commissionWeight && 0 != BigDecimal.ZERO.compareTo(finalServiceIncome)) {
