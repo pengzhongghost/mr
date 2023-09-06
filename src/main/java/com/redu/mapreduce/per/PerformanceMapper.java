@@ -66,8 +66,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 boolean isFormal = true;
                 if (StrUtil.isNotEmpty(hiredDateStr)) {
                     LocalDateTime formalMonth = DateUtil.parseLocalDateTime(DateUtil.format(DateUtil.parseLocalDateTime(hiredDateStr, DatePattern.NORM_DATETIME_PATTERN), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN).plusMonths(2);
-                    LocalDateTime nowMonth = DateUtil.parseLocalDateTime(DateUtil.format(LocalDateTime.now(), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN);
-                    isFormal = nowMonth.isAfter(formalMonth);
+                    LocalDateTime lastMonth = DateUtil.parseLocalDateTime(DateUtil.format(LocalDateTime.now().minusMonths(1), DatePattern.NORM_MONTH_PATTERN), DatePattern.NORM_MONTH_PATTERN);
+                    isFormal = lastMonth.isAfter(formalMonth);
                 }
                 employee.setFormal(isFormal);
                 return employee;
