@@ -32,10 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO> {
 
-    private DimensionVO outK = new DimensionVO();
-
-    private EmployeePerformanceVO outV = new EmployeePerformanceVO();
-
     /**
      * <用户id,用户信息>
      */
@@ -129,7 +125,6 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
 
     @Override
     protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO>.Context context) throws IOException, InterruptedException {
-        outV = new EmployeePerformanceVO();
         String line = value.toString();
         try {
             String[] split = line.split("\u0001");
@@ -164,86 +159,104 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             if ((1 == platformType && appletList.contains("1"))
                     || 2 == platformType && appletList.contains("0")
                     || 4 == platformType) {
-                switch (platformType) {
-                    case 1:
-                        outK.setPlatform("dy");
-                        break;
-                    case 2:
-                        outK.setPlatform("ks");
-                        break;
-                    case 4:
-                        outK.setPlatform("wx");
-                        break;
-                    default:
-                        outK.setPlatform("-");
-                }
-                outV.setPlatform(outK.getPlatform());
-                OrderExtVO orderExt = JSONUtil.toBean(reduOrder.getExt(), OrderExtVO.class);
-                String partnerId = userDeptOriginMap.get("PARTNER|" + orderExt.getHiPartnerid());
-                if (StrUtil.isEmpty(partnerId) || "0".equals(partnerId)) {
-                    return;
-                }
-                String statisticsTime = DateUtil.format(reduOrder.getPaidTime(), DatePattern.NORM_MONTH_FORMATTER);
-                if (!paidMonth.equals(statisticsTime)) {
-                    return;
-                }
-                Double estimateSettlementAmount = reduOrder.getEstimateSettlementAmount();
-                //2.订单数量和gmv
-                if (4 == reduOrder.getOrderStatus()) {
-                    outV.setFundOrderCount(1);
-                    outV.setFundOrderGmv(String.valueOf(estimateSettlementAmount));
-                } else {
-                    outV.setValidOrderNum(1);
-                    outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
-                    if (null != reduOrder.getAchievementsOrderMultiple()) {
-                        outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
-                    }
-                }
-                outV.setGmv(String.valueOf(estimateSettlementAmount));
-                outV.setEstimateServiceIncome(String.valueOf(reduOrder.getEstimateServiceIncome()));
-                outV.setServiceFeeRate(String.valueOf(reduOrder.getServiceRate()));
-                //3.招商
-                if (NumberUtil.isNumber(partnerId)) {
-                    outV.setUserId(Long.parseLong(partnerId));
-                    outK.setUserId(Long.parseLong(partnerId));
-                } else {
-                    outK.setUserId(0);
-                }
-                outV.setRoleType(1);
-                outV.setOrderCount(1);
-                //工号
-                EmployeeVO employee = userMap.get(partnerId);
-                if (null != employee) {
-                    outV.setEmployeeNo(employee.getEmployeeNo());
-                    outV.setEmployeeName(employee.getName());
-                    outK.setEmployeeNo(employee.getEmployeeNo());
-                    outV.setHiredDate(employee.getHiredDate());
-                    outV.setIsFormal(String.valueOf(employee.isFormal()));
-                } else {
-                    outK.setEmployeeNo("0");
-                }
-                //4.部门信息
-                DeptVO dept = deptMap.get("DEPT|GROUP|" + orderExt.getPartnerGroupId());
-                if (null != dept) {
-                    outV.setDeptIdPath(dept.getDeptIdPath());
-                    outV.setTeamId(dept.getTeamId());
-                    outV.setBranchId(dept.getBranchId());
-                    outV.setGroupId(dept.getGroupId());
-                    outV.setDeptNamePath(dept.getDeptNamePath());
-                    outV.setTeamName(dept.getTeamName());
-                    outV.setBranchName(dept.getBranchName());
-                    outV.setGroupName(dept.getGroupName());
-                }
-                //5.统计时间
-                outV.setStatisticsTime(statisticsTime);
-                outK.setRoleType(1);
-                outK.setStatisticsTime(statisticsTime);
-                context.write(outK, outV);
+                //1.招商
+                write(context, reduOrder, platformType, 1);
+                //2.渠道
+                write(context, reduOrder, platformType, 2);
             }
         } catch (Exception e) {
             System.out.println("彭钟调试PerformanceMapper line" + e.getMessage());
             System.out.println("彭钟调试PerformanceMapper line : " + line);
         }
+    }
+
+    private void write(Mapper<LongWritable, Text, DimensionVO, EmployeePerformanceVO>.Context context, ReduOrderVO reduOrder, Byte platformType, Integer roleType) throws IOException, InterruptedException {
+        DimensionVO outK = new DimensionVO();
+        EmployeePerformanceVO outV = new EmployeePerformanceVO();
+        switch (platformType) {
+            case 1:
+                outK.setPlatform("dy");
+                break;
+            case 2:
+                outK.setPlatform("ks");
+                break;
+            case 4:
+                outK.setPlatform("wx");
+                break;
+            default:
+                outK.setPlatform("-");
+        }
+        OrderExtVO orderExt = JSONUtil.toBean(reduOrder.getExt(), OrderExtVO.class);
+        outV.setPlatform(outK.getPlatform());
+        String statisticsTime = DateUtil.format(reduOrder.getPaidTime(), DatePattern.NORM_MONTH_FORMATTER);
+        if (!paidMonth.equals(statisticsTime)) {
+            return;
+        }
+        Double estimateSettlementAmount = reduOrder.getEstimateSettlementAmount();
+        //2.订单数量和gmv
+        if (4 == reduOrder.getOrderStatus()) {
+            outV.setFundOrderCount(1);
+            outV.setFundOrderGmv(String.valueOf(estimateSettlementAmount));
+        } else {
+            outV.setValidOrderNum(1);
+            outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
+            if (null != reduOrder.getAchievementsOrderMultiple()) {
+                outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
+            }
+        }
+        outV.setGmv(String.valueOf(estimateSettlementAmount));
+        outV.setEstimateServiceIncome(String.valueOf(reduOrder.getEstimateServiceIncome()));
+        outV.setServiceFeeRate(String.valueOf(reduOrder.getServiceRate()));
+        outV.setOrderCount(1);
+        //5.统计时间
+        outV.setStatisticsTime(statisticsTime);
+        outK.setStatisticsTime(statisticsTime);
+        //具体区分招商渠道的逻辑
+        String userId;
+        DeptVO dept ;
+        if (1 == roleType) {
+            userId = userDeptOriginMap.get("PARTNER|" + orderExt.getHiPartnerid());
+            dept = deptMap.get("DEPT|GROUP|" + orderExt.getPartnerGroupId());
+        } else if (2 == roleType) {
+            userId = userDeptOriginMap.get("CHANNEL|" + orderExt.getHiChannelid());
+            dept = deptMap.get("DEPT|GROUP|" + orderExt.getChannelGroupId());
+        } else {
+            return;
+        }
+        if (StrUtil.isEmpty(userId) || "0".equals(userId)) {
+            return;
+        }
+        if (NumberUtil.isNumber(userId)) {
+            outV.setUserId(Long.parseLong(userId));
+            outK.setUserId(Long.parseLong(userId));
+        } else {
+            outK.setUserId(0);
+        }
+        outK.setRoleType(roleType);
+        outV.setRoleType(roleType);
+        //工号
+        EmployeeVO employee = userMap.get(userId);
+        if (null != employee) {
+            outV.setEmployeeNo(employee.getEmployeeNo());
+            outV.setEmployeeName(employee.getName());
+            outK.setEmployeeNo(employee.getEmployeeNo());
+            outV.setHiredDate(employee.getHiredDate());
+            outV.setIsFormal(String.valueOf(employee.isFormal()));
+        } else {
+            outK.setEmployeeNo("0");
+        }
+        //4.部门信息
+        if (null != dept) {
+            outV.setDeptIdPath(dept.getDeptIdPath());
+            outV.setTeamId(dept.getTeamId());
+            outV.setBranchId(dept.getBranchId());
+            outV.setGroupId(dept.getGroupId());
+            outV.setDeptNamePath(dept.getDeptNamePath());
+            outV.setTeamName(dept.getTeamName());
+            outV.setBranchName(dept.getBranchName());
+            outV.setGroupName(dept.getGroupName());
+        }
+        context.write(outK, outV);
     }
 
     @Override
