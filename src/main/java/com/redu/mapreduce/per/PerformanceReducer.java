@@ -37,8 +37,6 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
-    private final EmployeePerformanceResultVO performanceResult = new EmployeePerformanceResultVO();
-
     private Integer partnerPartConfigId;
 
     private static List<PerformanceConfigVO> partnerPartConfigValues;
@@ -124,6 +122,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         if (0 == key.getUserId()) {
             return;
         }
+        EmployeePerformanceResultVO performanceResult = new EmployeePerformanceResultVO();
         for (EmployeePerformanceVO value : values) {
             try {
                 performanceResult.setTeamName(value.getTeamName());
