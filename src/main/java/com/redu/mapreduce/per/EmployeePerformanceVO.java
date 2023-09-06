@@ -58,7 +58,11 @@ public class EmployeePerformanceVO implements Writable {
 
     private String employeeNo;
 
+    //业绩订单量
     private String orderAchievementSum;
+
+    //有效业绩订单量
+    private String validOrderAchievementSum;
 
     private String estimateServiceIncome;
 

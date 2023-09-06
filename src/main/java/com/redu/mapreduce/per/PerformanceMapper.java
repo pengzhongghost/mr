@@ -201,8 +201,11 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setValidOrderNum(1);
             outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
             if (null != reduOrder.getAchievementsOrderMultiple()) {
-                outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
+                outV.setValidOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
             }
+        }
+        if (null != reduOrder.getAchievementsOrderMultiple()) {
+            outV.setOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
         }
         outV.setGmv(String.valueOf(estimateSettlementAmount));
         outV.setEstimateServiceIncome(String.valueOf(reduOrder.getEstimateServiceIncome()));
