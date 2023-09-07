@@ -50,7 +50,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
 
     private String paidMonth;
 
-    private List<String> dingEmployeeNos;
+    private Set<String> dingEmployeeNos;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -123,7 +123,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             URI uri04 = cacheFiles[3];
             String dirName04 = uri04.toString().split("/\\*")[0];
             List<DingEmployeeVO> dingEmployees = MapJoinUtil.read(dirName04, context.getConfiguration(), DingEmployeeVO.class);
-            dingEmployeeNos = dingEmployees.stream().map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toList());
+            dingEmployeeNos = dingEmployees.stream().map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toSet());
             //5.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
         } catch (Exception e) {
