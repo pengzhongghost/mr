@@ -123,8 +123,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             URI uri04 = cacheFiles[3];
             String dirName04 = uri04.toString().split("/\\*")[0];
             List<DingEmployeeVO> dingEmployees = MapJoinUtil.read(dirName04, context.getConfiguration(), DingEmployeeVO.class);
-            String yesterday = LocalDate.now().minusDays(1).format(DatePattern.PURE_DATE_FORMATTER);
-            dingEmployeeNos = dingEmployees.stream().filter(dingEmployee -> yesterday.equals(dingEmployee.getDs())).map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toList());
+            dingEmployeeNos = dingEmployees.stream().map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toList());
             //5.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
         } catch (Exception e) {
@@ -249,14 +248,15 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         outV.setRoleType(roleType);
         //工号
         EmployeeVO employee = userMap.get(userId);
-        if (null != employee) {
+        //员工不为空且工号在花名册里面
+        if (null != employee && dingEmployeeNos.contains(employee.getEmployeeNo())) {
             outV.setEmployeeNo(employee.getEmployeeNo());
             outV.setEmployeeName(employee.getName());
             outK.setEmployeeNo(employee.getEmployeeNo());
             outV.setHiredDate(employee.getHiredDate());
             outV.setIsFormal(String.valueOf(employee.isFormal()));
         } else {
-            outK.setEmployeeNo("0");
+            return;
         }
         //4.部门信息
         if (null != dept) {

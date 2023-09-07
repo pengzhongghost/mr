@@ -84,7 +84,9 @@ public class MapJoinUtil {
                                     field.set(newObj, DateUtil.parse(value, DatePattern.NORM_DATETIME_FORMAT));
                                 }
                             } else {
-                                field.set(newObj, val);
+                                if (null != val && !"".equals(val)) {
+                                    field.set(newObj, val);
+                                }
                             }
                         }
                         result.add(newObj);

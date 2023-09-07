@@ -55,6 +55,8 @@ public class EmployeePerformanceResultVO {
 
     private BigDecimal orderAchievementSum = BigDecimal.ZERO;
 
+    private BigDecimal validOrderAchievementSum = BigDecimal.ZERO;
+
     private BigDecimal estimateServiceIncome = BigDecimal.ZERO;
 
     private Long userId;

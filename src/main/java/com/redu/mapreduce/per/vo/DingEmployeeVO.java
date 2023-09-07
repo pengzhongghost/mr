@@ -100,7 +100,7 @@ public class DingEmployeeVO {
     /**
      * 手机号
      */
-    private String mobile;
+    private Long mobile;
 
     /**
      * 办公地点
@@ -111,10 +111,5 @@ public class DingEmployeeVO {
      * 备注
      */
     private String notes;
-
-    /**
-     * ds
-     */
-    private String ds;
 
 }
