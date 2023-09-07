@@ -48,7 +48,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         try {
             //1.获取config表中的相关信息
             URI[] cacheFiles = context.getCacheFiles();
-            URI uri01 = cacheFiles[3];
+            URI uri01 = cacheFiles[4];
             String dirName01 = uri01.toString().split("/\\*")[0];
             List<ConfigVO> configs = MapJoinUtil.read(dirName01, context.getConfiguration(), ConfigVO.class);
             for (ConfigVO config : configs) {
@@ -58,7 +58,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 }
             }
             //2.获取config_item表中的相关信息
-            URI uri02 = cacheFiles[4];
+            URI uri02 = cacheFiles[5];
             String dirName02 = uri02.toString().split("/\\*")[0];
             List<ConfigItemVO> configItems = MapJoinUtil.read(dirName02, context.getConfiguration(), ConfigItemVO.class);
             for (ConfigItemVO configItem : configItems) {

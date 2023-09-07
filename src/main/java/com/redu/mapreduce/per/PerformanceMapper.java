@@ -9,6 +9,7 @@ import com.redu.mapreduce.per.mapjoin.ReduDeptVO;
 import com.redu.mapreduce.per.mapjoin.ReduUserVO;
 import com.redu.mapreduce.per.mapjoin.UserDeptOriginVO;
 import com.redu.mapreduce.per.vo.DeptVO;
+import com.redu.mapreduce.per.vo.DingEmployeeVO;
 import com.redu.mapreduce.per.vo.EmployeeVO;
 import com.redu.mapreduce.per.vo.ReduOrderVO;
 import com.redu.mapreduce.util.HdfsUtil;
@@ -21,6 +22,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,6 +49,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
     private final Map<String, DeptVO> deptMap = new HashMap<>();
 
     private String paidMonth;
+
+    private List<String> dingEmployeeNos;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -115,7 +119,13 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                     deptMap.put(key, deptResult);
                 }
             }
-            //4.付款时间
+            //4.人事花名册
+            URI uri04 = cacheFiles[3];
+            String dirName04 = uri04.toString().split("/\\*")[0];
+            List<DingEmployeeVO> dingEmployees = MapJoinUtil.read(dirName04, context.getConfiguration(), DingEmployeeVO.class);
+            String yesterday = LocalDate.now().minusDays(1).format(DatePattern.PURE_DATE_FORMATTER);
+            dingEmployeeNos = dingEmployees.stream().filter(dingEmployee -> yesterday.equals(dingEmployee.getDs())).map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toList());
+            //5.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
         } catch (Exception e) {
             System.out.println("PerformanceMapper setUp: " + e.getMessage());
