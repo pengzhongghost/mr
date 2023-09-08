@@ -25,7 +25,7 @@ public class PerformanceDriver {
 
         // 1 获取配置信息以及封装任务
         Configuration configuration = new Configuration();
-        configuration.set("paid_month", LocalDate.now().minusMonths(2).format(DatePattern.NORM_MONTH_FORMATTER));
+        configuration.set("paid_month", LocalDate.now().minusMonths(1).format(DatePattern.NORM_MONTH_FORMATTER));
 
         OrcConf.MAPRED_OUTPUT_SCHEMA.setString(configuration,"struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,valid_order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string,hired_date:string,is_formal:string>");
 
