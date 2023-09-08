@@ -22,11 +22,11 @@ public class DimensionVO implements WritableComparable<DimensionVO> {
 
     private String platform;
 
-    private int roleType;
+    private Integer roleType;
 
     private String employeeNo;
 
-    private long userId;
+    private Long userId;
 
     private String statisticsTime;
 

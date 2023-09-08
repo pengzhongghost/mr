@@ -22,7 +22,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -242,7 +241,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setUserId(Long.parseLong(userId));
             outK.setUserId(Long.parseLong(userId));
         } else {
-            outK.setUserId(0);
+            outK.setUserId(null);
         }
         outK.setRoleType(roleType);
         outV.setRoleType(roleType);

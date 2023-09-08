@@ -79,7 +79,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
      * @param platform
      * @return
      */
-    private BigDecimal getPartCommissionWeight(BigDecimal serviceFeeRate, String platform) {
+    private BigDecimal getPartCommissionWeight(BigDecimal serviceFeeRate, String platform, Integer roleType) {
         switch (platform) {
             case "dy":
                 platform = "douyin";
@@ -91,23 +91,25 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 platform = "weixin";
                 break;
         }
-        for (PerformanceConfigVO configValue : partnerPartConfigValues) {
-            if (platform.equals(configValue.getPlatform())) {
-                for (PerformanceConfigVO.ConfigVO config : configValue.getConfig()) {
-                    List<RuleVO> rules = config.getRules();
-                    if (CollUtil.isNotEmpty(rules)) {
-                        if (1 == rules.size()) {
-                            RuleVO rule = rules.get(0);
-                            if (OperatorUtil.compare(serviceFeeRate, rule.getValue(), rule.getOperator())) {
-                                return config.getWeight();
+        if (1 == roleType) {
+            for (PerformanceConfigVO configValue : partnerPartConfigValues) {
+                if (platform.equals(configValue.getPlatform())) {
+                    for (PerformanceConfigVO.ConfigVO config : configValue.getConfig()) {
+                        List<RuleVO> rules = config.getRules();
+                        if (CollUtil.isNotEmpty(rules)) {
+                            if (1 == rules.size()) {
+                                RuleVO rule = rules.get(0);
+                                if (OperatorUtil.compare(serviceFeeRate, rule.getValue(), rule.getOperator())) {
+                                    return config.getWeight();
+                                }
                             }
-                        }
-                        if (2 == rules.size()) {
-                            RuleVO rule01 = rules.get(0);
-                            RuleVO rule02 = rules.get(1);
-                            if (OperatorUtil.compare(serviceFeeRate, rule01.getValue(), rule01.getOperator())
-                                    && OperatorUtil.compare(serviceFeeRate, rule02.getValue(), rule02.getOperator())) {
-                                return config.getWeight();
+                            if (2 == rules.size()) {
+                                RuleVO rule01 = rules.get(0);
+                                RuleVO rule02 = rules.get(1);
+                                if (OperatorUtil.compare(serviceFeeRate, rule01.getValue(), rule01.getOperator())
+                                        && OperatorUtil.compare(serviceFeeRate, rule02.getValue(), rule02.getOperator())) {
+                                    return config.getWeight();
+                                }
                             }
                         }
                     }
@@ -152,7 +154,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 performanceResult.setEstimateServiceIncome(performanceResult.getEstimateServiceIncome().add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome())));
                 performanceResult.setFundOrderGmv(performanceResult.getFundOrderGmv().add(new BigDecimal(StrUtil.isEmpty(value.getFundOrderGmv()) ? "0" : value.getFundOrderGmv())));
                 BigDecimal serviceFeeRate = new BigDecimal(StrUtil.isEmpty(value.getServiceFeeRate()) ? "0" : value.getServiceFeeRate()).multiply(new BigDecimal(100));
-                BigDecimal commissionWeight = getPartCommissionWeight(serviceFeeRate, value.getPlatform());
+                BigDecimal commissionWeight = getPartCommissionWeight(serviceFeeRate, value.getPlatform(), key.getRoleType());
                 if (null != commissionWeight && 0 != BigDecimal.ZERO.compareTo(finalServiceIncome)) {
                     performanceResult.setPerformanceCommission(performanceResult.getPerformanceCommission().add(finalServiceIncome.multiply(commissionWeight).divide(new BigDecimal("100"), 3, RoundingMode.FLOOR)));
                 }
