@@ -1,19 +1,21 @@
 package com.redu.mapreduce.per;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.redu.mapreduce.per.config.PerformanceConfigVO;
+import com.redu.mapreduce.per.config.RuleVO;
 import com.redu.mapreduce.per.mapjoin.ReduDeptVO;
 import com.redu.mapreduce.per.mapjoin.ReduUserVO;
 import com.redu.mapreduce.per.mapjoin.UserDeptOriginVO;
-import com.redu.mapreduce.per.vo.DeptVO;
-import com.redu.mapreduce.per.vo.DingEmployeeVO;
-import com.redu.mapreduce.per.vo.EmployeeVO;
-import com.redu.mapreduce.per.vo.ReduOrderVO;
+import com.redu.mapreduce.per.vo.*;
 import com.redu.mapreduce.util.HdfsUtil;
 import com.redu.mapreduce.util.MapJoinUtil;
+import com.redu.mapreduce.util.OperatorUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -21,6 +23,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -50,6 +54,10 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
     private String paidMonth;
 
     private Set<String> dingEmployeeNos;
+
+    private Integer partnerPartConfigId;
+
+    private static List<PerformanceConfigVO> partnerPartConfigValues;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -123,6 +131,26 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             String dirName04 = uri04.toString().split("/\\*")[0];
             List<DingEmployeeVO> dingEmployees = MapJoinUtil.read(dirName04, context.getConfiguration(), DingEmployeeVO.class);
             dingEmployeeNos = dingEmployees.stream().map(DingEmployeeVO::getEmployeeNo).collect(Collectors.toSet());
+            //1.获取config表中的相关信息
+            URI uri05 = cacheFiles[4];
+            String dirName05 = uri05.toString().split("/\\*")[0];
+            List<ConfigVO> configs = MapJoinUtil.read(dirName05, context.getConfiguration(), ConfigVO.class);
+            for (ConfigVO config : configs) {
+                //1.招商分成业绩key
+                if ("commission_config_partner_order_weight_detail".equals(config.getKey())) {
+                    partnerPartConfigId = config.getId();
+                }
+            }
+            //2.获取config_item表中的相关信息
+            URI uri06 = cacheFiles[5];
+            String dirName06 = uri06.toString().split("/\\*")[0];
+            List<ConfigItemVO> configItems = MapJoinUtil.read(dirName06, context.getConfiguration(), ConfigItemVO.class);
+            for (ConfigItemVO configItem : configItems) {
+                if (0 == configItem.getDeptId() && Objects.equals(partnerPartConfigId, configItem.getConfigId())) {
+                    partnerPartConfigValues = JSONUtil.toBean(configItem.getValue(), new TypeReference<List<PerformanceConfigVO>>() {
+                    }, false);
+                }
+            }
             //5.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
         } catch (Exception e) {
@@ -207,7 +235,11 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setFundOrderGmv(String.valueOf(estimateSettlementAmount));
         } else {
             outV.setValidOrderNum(1);
-            outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
+            if (1 == roleType) {
+                outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
+            } else {
+                outV.setValidServiceIncome(orderExt.getChannelFinalServiceIncome());
+            }
             if (null != reduOrder.getAchievementsOrderMultiple()) {
                 outV.setValidOrderAchievementSum(String.valueOf(reduOrder.getAchievementsOrderMultiple()));
             }
@@ -254,6 +286,10 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outK.setEmployeeNo(employee.getEmployeeNo());
             outV.setHiredDate(employee.getHiredDate());
             outV.setIsFormal(String.valueOf(employee.isFormal()));
+            BigDecimal commissionWeight = getPartCommissionWeight(new BigDecimal(String.valueOf(reduOrder.getServiceRate())), outK.getPlatform(), roleType);
+            if (null != commissionWeight && 0 != BigDecimal.ZERO.compareTo(new BigDecimal(outV.getValidServiceIncome()))) {
+                outV.setPerformanceCommission(new BigDecimal(outV.getValidServiceIncome()).multiply(commissionWeight).setScale(3, RoundingMode.FLOOR).toString());
+            }
         } else {
             return;
         }
@@ -269,6 +305,53 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setGroupName(dept.getGroupName());
         }
         context.write(outK, outV);
+    }
+
+    /**
+     * 获取提成加权
+     *
+     * @param serviceFeeRate
+     * @param platform
+     * @return
+     */
+    private BigDecimal getPartCommissionWeight(BigDecimal serviceFeeRate, String platform, Integer roleType) {
+        switch (platform) {
+            case "dy":
+                platform = "douyin";
+                break;
+            case "ks":
+                platform = "kuaishou";
+                break;
+            case "wx":
+                platform = "weixin";
+                break;
+        }
+        if (1 == roleType) {
+            for (PerformanceConfigVO configValue : partnerPartConfigValues) {
+                if (platform.equals(configValue.getPlatform())) {
+                    for (PerformanceConfigVO.ConfigVO config : configValue.getConfig()) {
+                        List<RuleVO> rules = config.getRules();
+                        if (CollUtil.isNotEmpty(rules)) {
+                            if (1 == rules.size()) {
+                                RuleVO rule = rules.get(0);
+                                if (OperatorUtil.compare(serviceFeeRate, rule.getValue(), rule.getOperator())) {
+                                    return config.getWeight();
+                                }
+                            }
+                            if (2 == rules.size()) {
+                                RuleVO rule01 = rules.get(0);
+                                RuleVO rule02 = rules.get(1);
+                                if (OperatorUtil.compare(serviceFeeRate, rule01.getValue(), rule01.getOperator())
+                                        && OperatorUtil.compare(serviceFeeRate, rule02.getValue(), rule02.getOperator())) {
+                                    return config.getWeight();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @Override

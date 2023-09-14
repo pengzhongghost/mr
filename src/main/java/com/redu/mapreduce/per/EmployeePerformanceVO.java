@@ -84,6 +84,11 @@ public class EmployeePerformanceVO implements Writable {
      */
     private String isFormal;
 
+    /**
+     * 新业绩
+     */
+    private String performanceCommission;
+
     private Field[] fields;
 
     {
