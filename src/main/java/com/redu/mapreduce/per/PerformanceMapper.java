@@ -288,7 +288,12 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setIsFormal(String.valueOf(employee.isFormal()));
             BigDecimal commissionWeight = getPartCommissionWeight(new BigDecimal(String.valueOf(reduOrder.getServiceRate())), outK.getPlatform(), roleType);
             if (null != commissionWeight && StrUtil.isNotEmpty(outV.getValidServiceIncome()) && 0 != BigDecimal.ZERO.compareTo(new BigDecimal(outV.getValidServiceIncome()))) {
-                outV.setPerformanceCommission(new BigDecimal(outV.getValidServiceIncome()).multiply(commissionWeight).setScale(3, RoundingMode.FLOOR).toString());
+                //如果二级团长是星推团长
+                if (3489157967960523766L == reduOrder.getSecondInstitutionId()) {
+                    outV.setPerformanceCommission(outV.getValidServiceIncome());
+                } else {
+                    outV.setPerformanceCommission(new BigDecimal(outV.getValidServiceIncome()).multiply(commissionWeight).setScale(3, RoundingMode.FLOOR).toString());
+                }
             }
         } else {
             return;
