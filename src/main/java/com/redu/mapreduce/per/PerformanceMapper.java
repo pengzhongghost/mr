@@ -24,7 +24,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -286,18 +285,18 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outK.setEmployeeNo(employee.getEmployeeNo());
             outV.setHiredDate(employee.getHiredDate());
             outV.setIsFormal(String.valueOf(employee.isFormal()));
-            BigDecimal commissionWeight = getPartCommissionWeight(new BigDecimal(String.valueOf(reduOrder.getServiceRate())), outK.getPlatform(), roleType);
-            if (null != commissionWeight && StrUtil.isNotEmpty(outV.getValidServiceIncome()) && 0 != BigDecimal.ZERO.compareTo(new BigDecimal(outV.getValidServiceIncome()))) {
-                //如果二级团长是星推团长
-                if (null != reduOrder.getSecondInstitutionId() && 3489157967960523766L == reduOrder.getSecondInstitutionId()) {
-                    outV.setPerformanceCommission(outV.getValidServiceIncome());
-                } else {
-                    outV.setPerformanceCommission(new BigDecimal(outV.getValidServiceIncome()).multiply(commissionWeight).setScale(3, RoundingMode.FLOOR).toString());
-                }
-            }
-        } else {
-            return;
+//            BigDecimal commissionWeight = getPartCommissionWeight(new BigDecimal(String.valueOf(reduOrder.getServiceRate())), outK.getPlatform(), roleType);
+//            if (null != commissionWeight && StrUtil.isNotEmpty(outV.getValidServiceIncome()) && 0 != BigDecimal.ZERO.compareTo(new BigDecimal(outV.getValidServiceIncome()))) {
+//                //如果二级团长是星推团长
+//                if (null != reduOrder.getSecondInstitutionId() && 3489157967960523766L == reduOrder.getSecondInstitutionId()) {
+//                    outV.setPerformanceCommission(outV.getValidServiceIncome());
+//                } else {
+//                    outV.setPerformanceCommission(new BigDecimal(outV.getValidServiceIncome()).multiply(commissionWeight).setScale(3, RoundingMode.FLOOR).toString());
+//                }
+//            }
+
         }
+        outV.setPerformanceCommission(orderExt.getPartnerWeithtServiceIncome());
         //4.部门信息
         if (null != dept) {
             outV.setDeptIdPath(dept.getDeptIdPath());
