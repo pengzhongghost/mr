@@ -56,6 +56,7 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/ding_employee/ds=" + ds + "/*"));
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config/ds=" + ds + "/*"));
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/config_item/ds=" + ds + "/*"));
+        job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/dept_user_role/ds=" + ds + "/*"));
 
         // 6 设置输入和输出路径
         //TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230818"));
