@@ -190,7 +190,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                         }
                     }
                 }
-                userDingDeptMap.put(deptUserRole.getDeptId(), userDingDept);
+                userDingDeptMap.put(deptUserRole.getUserId(), userDingDept);
             }
             //5.付款时间
             paidMonth = context.getConfiguration().get("paid_month");
