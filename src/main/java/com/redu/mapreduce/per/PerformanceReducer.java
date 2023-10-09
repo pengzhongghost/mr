@@ -35,6 +35,7 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
         EmployeePerformanceResultVO performanceResult = new EmployeePerformanceResultVO();
         for (EmployeePerformanceVO value : values) {
             try {
+                //1.部门信息
                 performanceResult.setTeamName(value.getTeamName());
                 performanceResult.setTeamId(value.getTeamId());
                 performanceResult.setBranchName(value.getBranchName());
@@ -43,6 +44,16 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 performanceResult.setGroupId(value.getGroupId());
                 performanceResult.setDeptIdPath(value.getDeptIdPath());
                 performanceResult.setDeptNamePath(value.getDeptNamePath());
+                //2.钉钉部门信息
+                performanceResult.setFirstLevelDeptId(value.getFirstLevelDeptId());
+                performanceResult.setSecondLevelDeptId(value.getSecondLevelDeptId());
+                performanceResult.setThirdLevelDeptId(value.getThirdLevelDeptId());
+                performanceResult.setFourthLevelDeptId(value.getFourthLevelDeptId());
+                performanceResult.setFifthLevelDeptId(value.getFifthLevelDeptId());
+                performanceResult.setSixthLevelDeptId(value.getSixthLevelDeptId());
+                performanceResult.setDingDeptIdPath(value.getDingDeptIdPath());
+                performanceResult.setDingDeptNamePath(value.getDingDeptNamePath());
+                //3.其他
                 performanceResult.setEmployeeName(value.getEmployeeName());
                 performanceResult.setStatisticsTime(value.getStatisticsTime());
                 performanceResult.setPlatform(value.getPlatform());

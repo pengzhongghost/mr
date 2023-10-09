@@ -89,6 +89,46 @@ public class EmployeePerformanceVO implements Writable {
      */
     private String performanceCommission;
 
+    /**
+     * 钉钉一级部门
+     */
+    private String firstLevelDeptId;
+
+    /**
+     * 钉钉二级部门
+     */
+    private String secondLevelDeptId;
+
+    /**
+     * 钉钉三级部门
+     */
+    private String thirdLevelDeptId;
+
+    /**
+     * 钉钉四级部门
+     */
+    private String fourthLevelDeptId;
+
+    /**
+     * 钉钉五级部门
+     */
+    private String fifthLevelDeptId;
+
+    /**
+     * 钉钉六级部门
+     */
+    private String sixthLevelDeptId;
+
+    /**
+     * 钉钉部门idPath
+     */
+    private String dingDeptIdPath;
+
+    /**
+     * 钉钉部门namepath
+     */
+    private String dingDeptNamePath;
+
     private Field[] fields;
 
     {

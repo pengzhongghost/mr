@@ -69,4 +69,20 @@ public class EmployeePerformanceResultVO {
 
     private String isFormal;
 
+    private String firstLevelDeptId;
+
+    private String secondLevelDeptId;
+
+    private String thirdLevelDeptId;
+
+    private String fourthLevelDeptId;
+
+    private String fifthLevelDeptId;
+
+    private String sixthLevelDeptId;
+
+    private String dingDeptIdPath;
+
+    private String dingDeptNamePath;
+
 }

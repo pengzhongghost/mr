@@ -350,6 +350,18 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             outV.setBranchName(dept.getBranchName());
             outV.setGroupName(dept.getGroupName());
         }
+        UserDingDeptVO userDingDept = userDingDeptMap.get(Integer.parseInt(userId));
+        //5.钉钉部门信息
+        if (null != userDingDept) {
+            outV.setDingDeptIdPath(userDingDept.getDingDeptIdPath());
+            outV.setDingDeptNamePath(userDingDept.getDingDeptNamePath());
+            outV.setFirstLevelDeptId(userDingDept.getFirstLevelDeptId());
+            outV.setSecondLevelDeptId(userDingDept.getSecondLevelDeptId());
+            outV.setThirdLevelDeptId(userDingDept.getThirdLevelDeptId());
+            outV.setFourthLevelDeptId(userDingDept.getFourthLevelDeptId());
+            outV.setFifthLevelDeptId(userDingDept.getFifthLevelDeptId());
+            outV.setSixthLevelDeptId(userDingDept.getSixthLevelDeptId());
+        }
         context.write(outK, outV);
     }
 
