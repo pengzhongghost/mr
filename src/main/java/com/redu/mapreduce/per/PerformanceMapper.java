@@ -156,11 +156,14 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 }
             }
             //3.获取config_item表中的相关信息
-            URI uri07 = cacheFiles[5];
+            URI uri07 = cacheFiles[6];
             String dirName07 = uri07.toString().split("/\\*")[0];
             List<DeptUserRoleVO> deptUserRoles = MapJoinUtil.read(dirName07, context.getConfiguration(), DeptUserRoleVO.class);
             for (DeptUserRoleVO deptUserRole : deptUserRoles) {
                 ReduDeptVO reduDept = reduDeptMap.get(deptUserRole.getDeptId());
+                if (null == reduDept || null == reduDept.getDingId()) {
+                    continue;
+                }
                 UserDingDeptVO userDingDept = new UserDingDeptVO();
                 userDingDept.setUserId(deptUserRole.getUserId());
                 userDingDept.setDingDeptIdPath(reduDept.getIdPath());
@@ -168,18 +171,18 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String idPath = reduDept.getIdPath();
                 if (StrUtil.isNotEmpty(idPath)) {
                     String[] idSplit = idPath.split("/");
-                    if (idSplit.length > 0) {
-                        userDingDept.setFirstLevelDeptId(idSplit[0]);
-                        if (idSplit.length > 1) {
-                            userDingDept.setFirstLevelDeptId(idSplit[1]);
-                            if (idSplit.length > 2) {
-                                userDingDept.setFirstLevelDeptId(idSplit[2]);
-                                if (idSplit.length > 3) {
-                                    userDingDept.setFirstLevelDeptId(idSplit[3]);
-                                    if (idSplit.length > 4) {
-                                        userDingDept.setFirstLevelDeptId(idSplit[4]);
-                                        if (idSplit.length > 5) {
-                                            userDingDept.setFirstLevelDeptId(idSplit[5]);
+                    if (idSplit.length > 1) {
+                        userDingDept.setFirstLevelDeptId(idSplit[1]);
+                        if (idSplit.length > 2) {
+                            userDingDept.setSecondLevelDeptId(idSplit[2]);
+                            if (idSplit.length > 3) {
+                                userDingDept.setThirdLevelDeptId(idSplit[3]);
+                                if (idSplit.length > 4) {
+                                    userDingDept.setFourthLevelDeptId(idSplit[4]);
+                                    if (idSplit.length > 5) {
+                                        userDingDept.setFifthLevelDeptId(idSplit[5]);
+                                        if (idSplit.length > 6) {
+                                            userDingDept.setSixthLevelDeptId(idSplit[6]);
                                         }
                                     }
                                 }

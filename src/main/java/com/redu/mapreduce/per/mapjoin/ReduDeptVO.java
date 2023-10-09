@@ -29,5 +29,8 @@ public class ReduDeptVO {
     private Date createTime;
     private Date updateTime;
     private Byte isDelete;
+    private String dingId;
+    private String dingParentId;
+    private Byte type;
 
 }
