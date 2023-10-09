@@ -27,7 +27,7 @@ public class PerformanceDriver {
         Configuration configuration = new Configuration();
         configuration.set("paid_month", LocalDate.now().minusMonths(1).format(DatePattern.NORM_MONTH_FORMATTER));
 
-        OrcConf.MAPRED_OUTPUT_SCHEMA.setString(configuration,"struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,valid_order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string,hired_date:string,is_formal:string>");
+        OrcConf.MAPRED_OUTPUT_SCHEMA.setString(configuration,"struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,valid_order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string,hired_date:string,is_formal:string,first_level_dept_id:string,second_level_dept_id:string,third_level_dept_id:string,fourth_level_dept_id:string,fifth_level_dept_id:string,sixth_level_dept_id:string,ding_dept_id_path:string,ding_dept_name_path:string>");
 
         Job job = Job.getInstance(configuration);
 
@@ -59,7 +59,7 @@ public class PerformanceDriver {
         job.addCacheFile(new URI("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/dept_user_role/ds=" + ds + "/*"));
 
         // 6 设置输入和输出路径
-        //TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20230818"));
+        //TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order_uat/ds=20231008"));
         TextInputFormat.setInputPaths(job, new Path("hdfs://hadoop001:9000/user/hive/warehouse/data_cube.db/redu_order/ds=" + ds +"/*"));
         job.setOutputFormatClass(OrcOutputFormat.class);
         //OrcOutputFormat.setOutputPath(job, new Path("hdfs://hadoop001:9000/test/out/performance_temp/" + System.currentTimeMillis()));
