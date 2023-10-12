@@ -171,18 +171,18 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
                 String idPath = reduDept.getIdPath();
                 if (StrUtil.isNotEmpty(idPath)) {
                     String[] idSplit = idPath.split("/");
-                    if (idSplit.length > 1) {
-                        userDingDept.setFirstLevelDeptId(idSplit[1]);
-                        if (idSplit.length > 2) {
-                            userDingDept.setSecondLevelDeptId(idSplit[2]);
-                            if (idSplit.length > 3) {
-                                userDingDept.setThirdLevelDeptId(idSplit[3]);
-                                if (idSplit.length > 4) {
-                                    userDingDept.setFourthLevelDeptId(idSplit[4]);
-                                    if (idSplit.length > 5) {
-                                        userDingDept.setFifthLevelDeptId(idSplit[5]);
-                                        if (idSplit.length > 6) {
-                                            userDingDept.setSixthLevelDeptId(idSplit[6]);
+                    if (idSplit.length > 2) {
+                        userDingDept.setFirstLevelDeptId(idSplit[2]);
+                        if (idSplit.length > 3) {
+                            userDingDept.setSecondLevelDeptId(idSplit[3]);
+                            if (idSplit.length > 4) {
+                                userDingDept.setThirdLevelDeptId(idSplit[4]);
+                                if (idSplit.length > 5) {
+                                    userDingDept.setFourthLevelDeptId(idSplit[5]);
+                                    if (idSplit.length > 6) {
+                                        userDingDept.setFifthLevelDeptId(idSplit[6]);
+                                        if (idSplit.length > 7) {
+                                            userDingDept.setSixthLevelDeptId(idSplit[7]);
                                         }
                                     }
                                 }
