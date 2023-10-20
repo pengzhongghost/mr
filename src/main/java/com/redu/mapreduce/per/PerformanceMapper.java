@@ -338,7 +338,10 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
 //            }
 
         }
-        outV.setPerformanceCommission(orderExt.getPartnerWeithtServiceIncome());
+        //非退款的才算有效业绩服务费
+        if(4 != reduOrder.getOrderStatus()) {
+            outV.setPerformanceCommission(orderExt.getPartnerWeithtServiceIncome());
+        }
         //4.部门信息
         if (null != dept) {
             outV.setDeptIdPath(dept.getDeptIdPath());
