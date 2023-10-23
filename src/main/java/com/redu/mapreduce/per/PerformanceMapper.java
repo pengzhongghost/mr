@@ -279,7 +279,7 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
             if (1 == roleType) {
                 outV.setValidServiceIncome(orderExt.getPartnerFinalServiceIncome());
                 //排除星推的订单量
-                if (3489157967960523766L != reduOrder.getSecondInstitutionId()) {
+                if (null == reduOrder.getSecondInstitutionId() || 3489157967960523766L != reduOrder.getSecondInstitutionId()) {
                     outV.setExcludeXingTuiValidOrderCount(1);
                     outV.setExcludeXingTuiValidGmv(String.valueOf(estimateSettlementAmount));
                     outV.setExcludeXingTuiValidServiceIncome(orderExt.getPartnerFinalServiceIncome());

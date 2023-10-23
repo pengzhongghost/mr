@@ -93,11 +93,11 @@ public class EmployeePerformanceResultVO {
     /**
      * 排除星推的GMV
      */
-    private BigDecimal excludeXingTuiValidGmv;
+    private BigDecimal excludeXingTuiValidGmv = BigDecimal.ZERO;
 
     /**
      * 排除星推的有效服务费
      */
-    private BigDecimal excludeXingTuiValidServiceIncome;
+    private BigDecimal excludeXingTuiValidServiceIncome = BigDecimal.ZERO;
 
 }
