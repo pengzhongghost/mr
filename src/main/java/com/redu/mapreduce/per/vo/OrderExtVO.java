@@ -1,4 +1,4 @@
-package com.redu.mapreduce.per;
+package com.redu.mapreduce.per.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

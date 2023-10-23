@@ -129,6 +129,21 @@ public class EmployeePerformanceVO implements Writable {
      */
     private String dingDeptNamePath;
 
+    /**
+     * 排除星推的订单量
+     */
+    private long excludeXingTuiValidOrderCount;
+
+    /**
+     * 排除星推的GMV
+     */
+    private String excludeXingTuiValidGmv;
+
+    /**
+     * 排除星推的有效服务费
+     */
+    private String excludeXingTuiValidServiceIncome;
+
     private Field[] fields;
 
     {

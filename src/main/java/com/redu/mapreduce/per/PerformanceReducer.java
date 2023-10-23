@@ -3,6 +3,7 @@ package com.redu.mapreduce.per;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.redu.mapreduce.per.vo.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hadoop.io.*;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -21,7 +22,7 @@ import java.math.BigDecimal;
 public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformanceVO, NullWritable, OrcStruct> {
 
     private final TypeDescription schema =
-            TypeDescription.fromString("struct<team_name:string,team_id:int,branch_name:string,branch_id:int,group_name:string,group_id:int,dept_id_path:string,dept_name_path:string,employee_name:string,statistics_time:string,platform:string,order_count:bigint,fund_order_count:bigint,valid_order_num:bigint,gmv:string,fund_order_gmv:string,valid_service_income:string,role_type:int,employee_no:string,order_achievement_sum:string,valid_order_achievement_sum:string,estimate_service_income:string,user_id:bigint,performance_new:string,ds:string,hired_date:string,is_formal:string,first_level_dept_id:string,second_level_dept_id:string,third_level_dept_id:string,fourth_level_dept_id:string,fifth_level_dept_id:string,sixth_level_dept_id:string,ding_dept_id_path:string,ding_dept_name_path:string>");
+            TypeDescription.fromString(Constant.PER_ORC_STRUCT);
 
     private final OrcStruct orcStruct = (OrcStruct) OrcStruct.createValue(schema);
 
@@ -73,6 +74,9 @@ public class PerformanceReducer extends Reducer<DimensionVO, EmployeePerformance
                 performanceResult.setEstimateServiceIncome(performanceResult.getEstimateServiceIncome().add(new BigDecimal(StrUtil.isEmpty(value.getEstimateServiceIncome()) ? "0" : value.getEstimateServiceIncome())));
                 performanceResult.setFundOrderGmv(performanceResult.getFundOrderGmv().add(new BigDecimal(StrUtil.isEmpty(value.getFundOrderGmv()) ? "0" : value.getFundOrderGmv())));
                 performanceResult.setPerformanceCommission(performanceResult.getPerformanceCommission().add(new BigDecimal(StrUtil.isEmpty(value.getPerformanceCommission()) ? "0" : value.getPerformanceCommission())));
+                performanceResult.setExcludeXingTuiValidOrderCount(performanceResult.getExcludeXingTuiValidOrderCount() + value.getExcludeXingTuiValidOrderCount());
+                performanceResult.setExcludeXingTuiValidGmv(performanceResult.getExcludeXingTuiValidGmv().add(new BigDecimal(StrUtil.isEmpty(value.getExcludeXingTuiValidGmv()) ? "0" : value.getExcludeXingTuiValidGmv())));
+                performanceResult.setExcludeXingTuiValidServiceIncome(performanceResult.getExcludeXingTuiValidServiceIncome().add(new BigDecimal(StrUtil.isEmpty(value.getExcludeXingTuiValidServiceIncome()) ? "0" : value.getExcludeXingTuiValidServiceIncome())));
             } catch (Exception e) {
                 log.error("PerformanceReducer reduce", e);
                 log.error("PerformanceReducer reduce value:{}", JSONUtil.toJsonStr(value));

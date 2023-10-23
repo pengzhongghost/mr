@@ -85,4 +85,19 @@ public class EmployeePerformanceResultVO {
 
     private String dingDeptNamePath;
 
+    /**
+     * 排除星推的订单量
+     */
+    private long excludeXingTuiValidOrderCount;
+
+    /**
+     * 排除星推的GMV
+     */
+    private BigDecimal excludeXingTuiValidGmv;
+
+    /**
+     * 排除星推的有效服务费
+     */
+    private BigDecimal excludeXingTuiValidServiceIncome;
+
 }
