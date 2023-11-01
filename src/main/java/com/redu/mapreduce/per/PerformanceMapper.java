@@ -327,7 +327,8 @@ public class PerformanceMapper extends Mapper<LongWritable, Text, DimensionVO, E
         //工号
         EmployeeVO employee = userMap.get(userId);
         //员工不为空且工号在花名册里面
-        if (null != employee && StrUtil.isNotEmpty(employee.getEmployeeNo()) && dingEmployeeNos.contains(employee.getEmployeeNo())) {
+        //&& StrUtil.isNotEmpty(employee.getEmployeeNo()) && dingEmployeeNos.contains(employee.getEmployeeNo())
+        if (null != employee) {
             outV.setEmployeeNo(employee.getEmployeeNo());
             outV.setEmployeeName(employee.getName());
             outK.setEmployeeNo(employee.getEmployeeNo());
